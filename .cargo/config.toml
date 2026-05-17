@@ -1,0 +1,11 @@
+[target.aarch64-linux-android.env]
+PKG_CONFIG = ""
+PKG_CONFIG_ALLOW_CROSS = "1"
+
+[target.armv7-linux-androideabi.env]
+PKG_CONFIG = ""
+PKG_CONFIG_ALLOW_CROSS = "1"
+
+[target.x86_64-linux-android.env]
+PKG_CONFIG = ""
+PKG_CONFIG_ALLOW_CROSS = "1"

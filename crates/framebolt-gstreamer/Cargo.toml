@@ -1,0 +1,7 @@
+[package]
+name = "framebolt-gstreamer"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+gstreamer = "0.24.5"

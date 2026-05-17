@@ -1,0 +1,9 @@
+[package]
+name = "framebolt-canvas"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+bytemuck = { version = "1.25.0", features = ["derive"] }
+glam .workspace = true
+wgpu   = "27.0.1"

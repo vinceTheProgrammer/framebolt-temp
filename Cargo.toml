@@ -1,0 +1,16 @@
+[workspace]
+members = [
+    "apps/desktop",
+    "apps/mobile",
+    "crates/framebolt-core", "crates/framebolt-gstreamer", "crates/framebolt-media", "crates/framebolt-canvas", 
+    ]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+version = "0.1.0"
+
+[workspace.dependencies]
+framebolt-core = { path = "crates/framebolt-core" }
+wasmtime = "42.0.1"
+glam = "0.32.1"

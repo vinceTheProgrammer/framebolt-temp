@@ -1,0 +1,80 @@
+[package]
+name = "framebolt-mobile"
+edition.workspace = true
+version.workspace = true
+
+[package.metadata.android]
+use_aapt2 = true
+
+package = "com.framebolt.app"
+
+# Specifies the array of targets to build for.
+build_targets = [ 
+    # "armv7-linux-androideabi", 
+    "aarch64-linux-android", 
+    # "i686-linux-android", 
+    # "x86_64-linux-android" 
+]
+
+strip = "strip"
+
+# resources = "path/to/resources_folder"
+
+assets = "../../assets"
+
+runtime_libs = "android/libs"
+
+java_sources = "android/src"
+
+[package.metadata.android.signing.release]
+path = "android/framebolt-release.keystore"
+keystore_password = "$FRAMEBOLT_KEYSTORE_PASSWORD"
+alias = "framebolt"
+key_password = "$FRAMEBOLT_KEY_PASSWORD"
+
+[package.metadata.android.sdk]
+min_sdk_version = 23
+target_sdk_version = 34
+
+[package.metadata.android.application]
+has_code = true
+theme = "@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen"
+
+[[package.metadata.android.application.activity]]
+name = ".MainActivity"
+orientation = "landscape"
+
+[[package.metadata.android.application.activity.meta_data]]
+name = "android.app.lib_name"
+value = "framebolt_mobile"
+
+[[package.metadata.android.application.activity.intent_filter]]
+actions = ["android.intent.action.VIEW", "android.intent.action.MAIN"]
+categories = ["android.intent.category.LAUNCHER"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+framebolt-core.workspace = true
+framebolt-canvas = { path = "../../crates/framebolt-canvas" }
+wgpu  = "27.0.1"
+glam .workspace = true
+eframe = { version = "0.33.3", default-features = false, features = ["wgpu", "android-native-activity", "default_fonts"] }
+egui = "0.33.3"
+type-map = "0.5.1"
+winit   = {version = "0.30.13", default-features = false }
+# android_logger   = "0.15.1"
+
+# ^ android-game-activity instead of android-native-activity because by default eframe uses accesskit for free accessibility. Assess this again later.
+
+# comment to work on the android module; uncomment if testing on desktop or building
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.21"
+cargo-apk2 = "1.3.6"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = true

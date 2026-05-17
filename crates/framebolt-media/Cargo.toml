@@ -1,0 +1,6 @@
+[package]
+name = "framebolt-media"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]

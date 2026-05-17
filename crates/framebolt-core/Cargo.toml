@@ -1,0 +1,9 @@
+[package]
+name = "framebolt-core"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+rustc_version_runtime = "0.3.0"
+wasmtime.workspace = true
+framebolt-gstreamer = { path = "../framebolt-gstreamer" }
