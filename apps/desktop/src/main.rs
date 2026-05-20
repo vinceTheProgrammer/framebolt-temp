@@ -1,3 +1,5 @@
+use crate::app::FrameboltDesktopApp;
+
 pub mod app;
 
 fn main() -> Result<(), eframe::Error> {
@@ -6,9 +8,8 @@ fn main() -> Result<(), eframe::Error> {
         ..Default::default()
     };
     
-    eframe::run_native(
-        "Framebolt",
+    framebolt_egui::app::run_app(
         options,
-        Box::new(|cc| Ok(Box::new(app::FrameboltApp::new(cc)))),
+        |cc| FrameboltDesktopApp::new(cc),
     )
 }

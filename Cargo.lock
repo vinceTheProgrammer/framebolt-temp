@@ -1707,8 +1707,16 @@ name = "framebolt-desktop"
 version = "0.1.0"
 dependencies = [
  "eframe",
- "egui",
  "egui_dock",
+ "framebolt-core",
+ "framebolt-egui",
+]
+
+[[package]]
+name = "framebolt-egui"
+version = "0.1.0"
+dependencies = [
+ "eframe",
  "framebolt-canvas",
  "framebolt-core",
  "glam",
@@ -1733,13 +1741,9 @@ version = "0.1.0"
 dependencies = [
  "cargo-apk2",
  "eframe",
- "egui",
- "framebolt-canvas",
  "framebolt-core",
- "glam",
+ "framebolt-egui",
  "jni 0.21.1",
- "type-map",
- "wgpu",
  "winit",
 ]
 

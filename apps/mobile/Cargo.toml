@@ -57,13 +57,9 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 framebolt-core.workspace = true
-framebolt-canvas = { path = "../../crates/framebolt-canvas" }
-wgpu  = "27.0.1"
-glam .workspace = true
 eframe = { version = "0.33.3", default-features = false, features = ["wgpu", "android-native-activity", "default_fonts"] }
-egui = "0.33.3"
-type-map = "0.5.1"
 winit   = {version = "0.30.13", default-features = false }
+framebolt-egui = { path = "../../crates/framebolt-egui/" }
 # android_logger   = "0.15.1"
 
 # ^ android-game-activity instead of android-native-activity because by default eframe uses accesskit for free accessibility. Assess this again later.

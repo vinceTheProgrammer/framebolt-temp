@@ -2,7 +2,7 @@
 members = [
     "apps/desktop",
     "apps/mobile",
-    "crates/framebolt-core", "crates/framebolt-gstreamer", "crates/framebolt-media", "crates/framebolt-canvas", 
+    "crates/framebolt-core", "crates/framebolt-gstreamer", "crates/framebolt-media", "crates/framebolt-canvas", "crates/framebolt-egui/"
     ]
 resolver = "2"
 
@@ -14,3 +14,4 @@ version = "0.1.0"
 framebolt-core = { path = "crates/framebolt-core" }
 wasmtime = "42.0.1"
 glam = "0.32.1"
+wgpu = "27.0.1"

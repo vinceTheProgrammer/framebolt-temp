@@ -1,37 +1,44 @@
 use bytemuck::{Pod, Zeroable};
 use glam::{Mat2, Mat4, Quat, Vec2};
 
+struct StaticResources {
+    shader: wgpu::ShaderModule,
+    camera_layout: wgpu::BindGroupLayout,
+    camera_buffer: wgpu::Buffer,
+    camera_bind_group: wgpu::BindGroup,
+    vertex_buffer: wgpu::Buffer,
+}
+
 pub struct CanvasRenderer {
     texture: Option<wgpu::Texture>,
     view: Option<wgpu::TextureView>,
     size: (u32, u32),
     pub pipeline: Option<wgpu::RenderPipeline>,
-    format: wgpu::TextureFormat,
+    current_format: Option<wgpu::TextureFormat>,
     camera: Camera2D,
-    camera_buffer: Option<wgpu::Buffer>,
-    camera_bind_group: Option<wgpu::BindGroup>,
-    vertex_buffer: Option<wgpu::Buffer>,
+    static_resources: Option<StaticResources>
 }
 
 impl CanvasRenderer {
-    pub fn new(format: wgpu::TextureFormat) -> Self {
+    pub fn new() -> Self {
         Self {
             texture: None,
             view: None,
             size: (0, 0),
-            format,
+            current_format: None,
             pipeline: None,
             camera: Camera2D::default(),
-            camera_buffer: None,
-            camera_bind_group: None,
-            vertex_buffer: None,
+            static_resources: None,
         }
     }
 
-    pub fn init(
+    fn init_static_resources(
         &mut self,
         device: &wgpu::Device,
     ) {
+        if self.static_resources.is_some() {
+            return;
+        }
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("shader"),
@@ -69,15 +76,6 @@ impl CanvasRenderer {
             }],
         });
 
-        let pipeline_descriptor = &wgpu::PipelineLayoutDescriptor {
-            label: Some("Render Pipeline Layout"),
-            bind_group_layouts: &[&camera_layout],
-            push_constant_ranges: &[],
-        };
-
-        let render_pipeline_layout =
-            device.create_pipeline_layout(pipeline_descriptor);
-
         let canvas_vertices = [
             Vertex { position: [-960.0, -540.0] }, // bottom-left
             Vertex { position: [ 960.0, -540.0] }, // bottom-right
@@ -94,63 +92,111 @@ impl CanvasRenderer {
             usage: wgpu::BufferUsages::VERTEX,
         });
 
-        let pipeline_descriptor = &wgpu::RenderPipelineDescriptor {
-            label: Some("Render Pipeline"),
-            layout: Some(&render_pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: Some("vs_main"), // 1.
-                buffers: &[wgpu::VertexBufferLayout {
-                    array_stride: std::mem::size_of::<Vertex>() as u64,
-                    step_mode: wgpu::VertexStepMode::Vertex,
-                    attributes: &[
-                        wgpu::VertexAttribute {
-                            offset: 0,
-                            shader_location: 0,
-                            format: wgpu::VertexFormat::Float32x2,
-                        },
-                    ],
-                }],
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-            },
-            fragment: Some(wgpu::FragmentState { // 3.
-                module: &shader,
-                entry_point: Some("fs_main"),
-                targets: &[Some(wgpu::ColorTargetState { // 4.
-                    format: self.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList, // 1.
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw, // 2.
-                cull_mode: Some(wgpu::Face::Back),
-                // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
-                polygon_mode: wgpu::PolygonMode::Fill,
-                // Requires Features::DEPTH_CLIP_CONTROL
-                unclipped_depth: false,
-                // Requires Features::CONSERVATIVE_RASTERIZATION
-                conservative: false,
-            },
-            depth_stencil: None, // 1.
-            multisample: wgpu::MultisampleState {
-                count: 1, // 2.
-                mask: !0, // 3.
-                alpha_to_coverage_enabled: false, // 4.
-            },
-            cache: None,
-            multiview: None,
-        };
+        self.static_resources = Some(StaticResources {
+            camera_buffer,
+            camera_bind_group,
+            vertex_buffer,
+            shader,
+            camera_layout
+        });
 
-        let render_pipeline = device.create_render_pipeline(pipeline_descriptor);
+        self.rebuild_pipeline(
+            device,
+            wgpu::TextureFormat::Rgba8Unorm,
+        );
+    }
+
+    fn rebuild_pipeline(
+        &mut self,
+        device: &wgpu::Device,
+        format: wgpu::TextureFormat,
+    ) {
+
+        let static_resources = self.static_resources.as_ref().unwrap();
+        let shader = &static_resources.shader;
+        let camera_layout = &static_resources.camera_layout;
+
+        let render_pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: Some("Render Pipeline Layout"),
+                    bind_group_layouts: &[&camera_layout],
+                    push_constant_ranges: &[],
+                }
+            );
+
+        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                label: Some("Render Pipeline"),
+                layout: Some(&render_pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: &shader,
+                    entry_point: Some("vs_main"), // 1.
+                    buffers: &[wgpu::VertexBufferLayout {
+                        array_stride: std::mem::size_of::<Vertex>() as u64,
+                        step_mode: wgpu::VertexStepMode::Vertex,
+                        attributes: &[
+                            wgpu::VertexAttribute {
+                                offset: 0,
+                                shader_location: 0,
+                                format: wgpu::VertexFormat::Float32x2,
+                            },
+                        ],
+                    }],
+                    compilation_options: wgpu::PipelineCompilationOptions::default(),
+                },
+                fragment: Some(wgpu::FragmentState { // 3.
+                    module: &shader,
+                    entry_point: Some("fs_main"),
+                    targets: &[Some(wgpu::ColorTargetState { // 4.
+                        format: format,
+                        blend: Some(wgpu::BlendState::REPLACE),
+                        write_mask: wgpu::ColorWrites::ALL,
+                    })],
+                    compilation_options: wgpu::PipelineCompilationOptions::default(),
+                }),
+                primitive: wgpu::PrimitiveState {
+                    topology: wgpu::PrimitiveTopology::TriangleList, // 1.
+                    strip_index_format: None,
+                    front_face: wgpu::FrontFace::Ccw, // 2.
+                    cull_mode: Some(wgpu::Face::Back),
+                    // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
+                    polygon_mode: wgpu::PolygonMode::Fill,
+                    // Requires Features::DEPTH_CLIP_CONTROL
+                    unclipped_depth: false,
+                    // Requires Features::CONSERVATIVE_RASTERIZATION
+                    conservative: false,
+                },
+                depth_stencil: None, // 1.
+                multisample: wgpu::MultisampleState {
+                    count: 1, // 2.
+                    mask: !0, // 3.
+                    alpha_to_coverage_enabled: false, // 4.
+                },
+                cache: None,
+                multiview: None,
+            }
+        );
 
         self.pipeline = Some(render_pipeline);
-        self.camera_buffer = Some(camera_buffer);
-        self.camera_bind_group = Some(camera_bind_group);
-        self.vertex_buffer = Some(vertex_buffer);
+        self.current_format = Some(format);
+    }
+
+    pub fn ensure_initialized(
+        &mut self,
+        device: &wgpu::Device,
+        format: wgpu::TextureFormat,
+    ) {
+        self.init_static_resources(device);
+
+        if self.current_format == Some(format)
+            && self.pipeline.is_some()
+        {
+            return;
+        }
+
+        self.rebuild_pipeline(
+            device,
+            format,
+        );
     }
 
     pub fn resize(
@@ -162,6 +208,8 @@ impl CanvasRenderer {
         if self.size == (width, height) {
             return;
         }
+
+        let current_format = self.current_format.as_ref().unwrap();
 
         self.size = (width, height);
 
@@ -175,7 +223,7 @@ impl CanvasRenderer {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: self.format,
+            format: *current_format,
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT
                 | wgpu::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
@@ -253,7 +301,7 @@ impl CanvasRenderer {
         };
     
         queue.write_buffer(
-            self.camera_buffer.as_ref().unwrap(),
+            &self.static_resources.as_ref().unwrap().camera_buffer,
             0,
             bytemuck::cast_slice(&[uniform]),
         );
@@ -263,8 +311,8 @@ impl CanvasRenderer {
         let pipeline = self.pipeline.as_ref().unwrap();
 
         render_pass.set_pipeline(pipeline);
-        render_pass.set_bind_group(0, self.camera_bind_group.as_ref().unwrap(), &[]);
-        render_pass.set_vertex_buffer(0, self.vertex_buffer.as_ref().unwrap().slice(..));
+        render_pass.set_bind_group(0, &self.static_resources.as_ref().unwrap().camera_bind_group, &[]);
+        render_pass.set_vertex_buffer(0, self.static_resources.as_ref().unwrap().vertex_buffer.slice(..));
         render_pass.draw(0..6, 0..1);
     }
 
