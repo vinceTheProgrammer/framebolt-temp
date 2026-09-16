@@ -60,8 +60,6 @@ fn handle_desktop_canvas_input(
     let zoom_delta =
         ui.input(|i| i.smooth_scroll_delta.y * SCROLL_SCALE_FACTOR + OFFSET_SO_1_AT_REST);
 
-    println!("{:?}", zoom_delta);
-
     if (zoom_delta - 1.0).abs() > 0.001 {
         cmd.zoom_factor =
             1.0 + (zoom_delta - 1.0) * 0.75;
