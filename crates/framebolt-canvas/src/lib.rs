@@ -16,7 +16,7 @@ pub struct CanvasRenderer {
     pub pipeline: Option<wgpu::RenderPipeline>,
     current_format: Option<wgpu::TextureFormat>,
     camera: Camera2D,
-    static_resources: Option<StaticResources>
+    static_resources: Option<StaticResources>,
 }
 
 impl CanvasRenderer {
@@ -278,20 +278,24 @@ impl CanvasRenderer {
     }
 
     pub fn apply_camera_command(&mut self, command: CameraCommand, width: f32, height: f32) {
-        self.camera.apply(command, glam::vec2(width, height));
+        let viewport = glam::vec2(width, height);
+
+
+        let world_pivot = self.camera.screen_to_world(command.pivot, viewport);
+
+        self.camera.apply(command, viewport);
     }
     
     pub fn update_camera(&mut self, queue: &wgpu::Queue, width: f32, height: f32) {
-        let view = Mat4::from_translation(-self.camera.position.extend(0.0))
-                 * Mat4::from_quat(Quat::from_rotation_z(-self.camera.rotation)); // inverse rotation
+        let view = Mat4::from_quat(Quat::from_rotation_z(-self.camera.rotation))
+                 * Mat4::from_translation(-self.camera.position.extend(0.0));
     
         let proj = Mat4::orthographic_rh(
             -width / (2.0 * self.camera.zoom),
              width / (2.0 * self.camera.zoom),
             -height / (2.0 * self.camera.zoom),
              height / (2.0 * self.camera.zoom),
-            -1.0,
-             1.0,
+            -1.0, 1.0,
         );
     
         let view_proj = proj * view;
@@ -308,11 +312,13 @@ impl CanvasRenderer {
     }
 
     pub fn render_to_render_pass(&self, render_pass: &mut wgpu::RenderPass<'_>) {
+        let resources = self.static_resources.as_ref().unwrap();
         let pipeline = self.pipeline.as_ref().unwrap();
-
+    
+        // Main content
         render_pass.set_pipeline(pipeline);
-        render_pass.set_bind_group(0, &self.static_resources.as_ref().unwrap().camera_bind_group, &[]);
-        render_pass.set_vertex_buffer(0, self.static_resources.as_ref().unwrap().vertex_buffer.slice(..));
+        render_pass.set_bind_group(0, &resources.camera_bind_group, &[]);
+        render_pass.set_vertex_buffer(0, resources.vertex_buffer.slice(..));
         render_pass.draw(0..6, 0..1);
     }
 
@@ -375,29 +381,29 @@ impl Default for Camera2D {
 
 impl Camera2D {
     pub fn apply(&mut self, cmd: CameraCommand, viewport: Vec2) {
-        // Pan
-        self.position -= cmd.pan / self.zoom;
-
-        // Rotation around pivot
-        if cmd.rotate_delta.abs() > f32::EPSILON {
-            let world_pivot = self.screen_to_world(cmd.pivot, viewport);
-            let rot = Quat::from_rotation_z(cmd.rotate_delta);
-
-            let diff = (self.position - world_pivot).extend(0.0);
-            self.position = world_pivot + (rot * diff).truncate();
-
-            self.rotation = (self.rotation + cmd.rotate_delta).rem_euclid(std::f32::consts::TAU);
-        }
-
         // Zoom around pivot
-        if (cmd.zoom_factor - 1.0).abs() > f32::EPSILON {
+        if (cmd.zoom_factor - 1.0).abs() > 0.001 {
             let world_before = self.screen_to_world(cmd.pivot, viewport);
-
-            self.zoom = (self.zoom * cmd.zoom_factor)
-                .clamp(self.min_zoom, self.max_zoom);
-
+            self.zoom = (self.zoom * cmd.zoom_factor).clamp(self.min_zoom, self.max_zoom);
             let world_after = self.screen_to_world(cmd.pivot, viewport);
             self.position += world_before - world_after;
+        }
+    
+        // Rotation around pivot
+        if cmd.rotate_delta.abs() > 0.0001 {
+            let world_before = self.screen_to_world(cmd.pivot, viewport);
+            self.rotation = (self.rotation + cmd.rotate_delta).rem_euclid(std::f32::consts::TAU);
+            let world_after = self.screen_to_world(cmd.pivot, viewport);
+            self.position += world_before - world_after;
+        }
+    
+        // Pan
+        if cmd.pan != glam::Vec2::ZERO {
+            let world_delta =
+                glam::Mat2::from_angle(self.rotation)
+                    * (cmd.pan / self.zoom);
+
+            self.position -= world_delta;
         }
     }
 
@@ -408,7 +414,7 @@ impl Camera2D {
         );
 
         // Rotate inverse, then scale + translate
-        let rotated = Mat2::from_angle(-self.rotation) * centered;
+        let rotated = Mat2::from_angle(self.rotation) * centered;
         rotated / self.zoom + self.position
     }
 

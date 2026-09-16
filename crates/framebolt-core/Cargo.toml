@@ -7,3 +7,6 @@ version.workspace = true
 rustc_version_runtime = "0.3.0"
 wasmtime.workspace = true
 framebolt-gstreamer = { path = "../framebolt-gstreamer" }
+
+[dev-dependencies]
+proptest = "1.11.0"

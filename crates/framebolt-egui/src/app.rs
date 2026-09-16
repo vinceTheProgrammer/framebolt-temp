@@ -1,4 +1,6 @@
-use crate::renderer::SharedRenderer;
+use eframe::egui;
+
+use crate::{panels::{PanelRegistry, canvas::CanvasPanel, timeline::TimelinePanel, tools::ToolsPanel}, renderer::SharedRenderer};
 
 pub struct SharedApp {
     pub renderer: Option<SharedRenderer>,
@@ -22,6 +24,14 @@ where
     eframe::run_native(
         "Framebolt",
         options,
-        Box::new(move |cc| Ok(Box::new(create(cc)))),
+        Box::new(move |cc| {
+            let mut fonts = egui::FontDefinitions::default();
+            egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
+
+            cc.egui_ctx.set_fonts(fonts);
+            
+            Ok(Box::new(create(cc)))
+            }
+        ),
     )
 }

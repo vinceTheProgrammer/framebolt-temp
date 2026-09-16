@@ -3,22 +3,24 @@ use std::sync::Arc;
 use eframe::egui::mutex::Mutex;
 use framebolt_canvas::CanvasRenderer;
 
+use crate::app::SharedApp;
+
 pub type SharedRenderer = Arc<Mutex<CanvasRenderer>>;
 
 pub fn prepare_renderer_then<F>(
     ctx: &eframe::egui::Context,
     frame: &eframe::Frame,
-    renderer: &mut Option<SharedRenderer>,
+    shared: &mut SharedApp,
     f: F,
 )
 where
-    F: FnOnce(&wgpu::Queue, SharedRenderer),
+    F: FnOnce(&wgpu::Queue, &mut SharedApp),
 {
     if let Some(render_state) = frame.wgpu_render_state() {
         let device = &render_state.device;
         let queue = &render_state.queue;
 
-        let renderer = renderer.get_or_insert_with(|| {
+        let renderer = shared.renderer.get_or_insert_with(|| {
             Arc::new(Mutex::new(
                 CanvasRenderer::new()
             ))
@@ -32,6 +34,6 @@ where
 
         ctx.request_repaint();
 
-        f(queue, Arc::clone(renderer));
+        f(queue, shared);
     }
 }

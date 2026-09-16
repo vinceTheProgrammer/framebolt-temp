@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-export ANDROID_HOME=/opt/android-sdk
-export NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653
 export ANDROID_NDK=$NDK_HOME
 
 GST_ROOT=$(pwd)/gstreamer-android

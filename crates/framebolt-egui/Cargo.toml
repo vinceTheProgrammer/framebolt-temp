@@ -9,9 +9,13 @@ framebolt-canvas = { path = "../../crates/framebolt-canvas" }
 type-map = "0.5.1"
 wgpu.workspace = true
 glam.workspace = true
+egui-phosphor = "0.11"
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
 eframe = { version = "0.33.3", features = ["wgpu"] }
 
 [target.'cfg(target_os = "android")'.dependencies]
 eframe = { version = "0.33.3", default-features = false, features = ["wgpu", "android-native-activity", "default_fonts"] }
+
+[dev-dependencies]
+egui_kittest = {version = "0.33.3", features=["eframe", "wgpu"]}
