@@ -22,7 +22,7 @@ where
     A: eframe::App + 'static,
 {
     eframe::run_native(
-        "Framebolt",
+        "framebolt",
         options,
         Box::new(move |cc| {
             let mut fonts = egui::FontDefinitions::default();
