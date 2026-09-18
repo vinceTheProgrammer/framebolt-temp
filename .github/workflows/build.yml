@@ -25,7 +25,7 @@ jobs:
             libglib2.0-dev \
             python3 \
             dpkg-dev \
-            fuse2
+            libfuse2t64
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
