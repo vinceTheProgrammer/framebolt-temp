@@ -1,0 +1,63 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            libgstreamer1.0-dev \
+            libglib2.0-dev \
+            python3 \
+            dpkg-dev \
+            fuse2
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install linuxdeploy
+        run: |
+          sudo curl -L \
+            -o /usr/local/bin/linuxdeploy \
+            https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
+
+          sudo chmod +x /usr/local/bin/linuxdeploy
+
+      - name: Build Framebolt
+        run: |
+          cargo build -p framebolt-desktop --release
+
+      - name: Package AppImage
+        run: |
+          ./scripts/linux/package_appimage.sh
+
+      - name: Package Debian
+        run: |
+          ./scripts/linux/package_deb.sh
+
+      # - name: Package AUR
+      #   run: |
+      #     ./scripts/linux/package_aur.sh
+
+      # - name: Package RPM
+      #   run: |
+      #     ./scripts/linux/package_rpm.sh
+
+      # - name: Package Flatpak
+      #   run: |
+      #     ./scripts/linux/package_flatpak.sh

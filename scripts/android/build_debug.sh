@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 export ANDROID_NDK=$NDK_HOME
 

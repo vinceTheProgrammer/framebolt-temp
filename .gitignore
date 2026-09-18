@@ -11,3 +11,7 @@ armv7
 arm64
 apps/mobile/android/gstreamer
 apps/mobile/android/libs
+AppDir/
+deb/
+*.AppImage
+*.deb

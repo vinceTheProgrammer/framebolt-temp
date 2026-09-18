@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 GST_DEV_URL="https://github.com/vinceTheProgrammer/gstreamer-android-universal-dynamic-build/releases/download/v1.27.2.1/gstreamer-1.0-android-universal-1.27.2.1.tar.xz"
 GST_RUNTIME_URL="https://github.com/vinceTheProgrammer/gstreamer-android-universal-dynamic-build/releases/download/v1.27.2.1/gstreamer-1.0-android-universal-1.27.2.1-runtime.tar.xz"

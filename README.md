@@ -7,6 +7,7 @@ ALL INSTRUCTIONS BELOW ASSUME RUST IS INSTALLED (e.g. usage of the `cargo` comma
 All instructions below assume your current directory is the root of the project.
 
 # Desktop
+## Quickstart
 ### Run (debug)
 ```
 cargo run -p framebolt-desktop
@@ -18,6 +19,40 @@ cargo run -p framebolt-desktop
 cargo build -p framebolt-desktop
 ```
 *Add `--release` to run the release version*
+
+## Linux
+### AppImage
+#### Prerequisites
+1. Ensure `linuxdeploy` is installed
+#### Build
+```
+cargo build -p framebolt-desktop --release
+./scripts/linux/package_appimage.sh
+```
+
+### .deb
+#### Prerequisites
+1. Ensure `python3` is installed
+2. Ensure `dpkg-deb` is installed
+#### Build
+```
+cargo build -p framebolt-desktop --release
+./scripts/linux/package_deb.sh
+```
+useful for testing:
+```
+podman run --rm -it \
+    --platform linux/amd64 \
+    -v "$PWD:/pkg" \
+    ubuntu:24.04 \
+    bash
+```
+then for a quick sanity check of the `.deb` using the ubuntu container you just entered:
+```
+apt update
+apt install -y /pkg/framebolt_0.1.0_amd64.deb
+```
+
 
 # Mobile
 ## Mobile UI on Desktop
