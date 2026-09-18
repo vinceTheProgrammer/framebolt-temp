@@ -43,7 +43,9 @@ Description: Framebolt
 Depends: libgstreamer1.0-0
 EOF
 
-OUTPUT="${PACKAGE_NAME}_${VERSION}_${ARCH}.deb"
+mkdir -p dist
+
+OUTPUT="dist/${PACKAGE_NAME}_${VERSION}_${ARCH}.deb"
 
 dpkg-deb --build --root-owner-group deb "${OUTPUT}"
 
