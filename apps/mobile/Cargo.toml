@@ -68,9 +68,3 @@ framebolt-egui = { path = "../../crates/framebolt-egui/" }
 [target.'cfg(target_os = "android")'.dependencies]
 jni = "0.21"
 cargo-apk2 = "1.3.6"
-
-[profile.release]
-lto = "thin"
-codegen-units = 1
-panic = "abort"
-strip = true

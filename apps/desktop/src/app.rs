@@ -1,5 +1,6 @@
 use eframe::{egui, wgpu::Queue};
 use egui_dock::{DockArea, DockState};
+use framebolt_core::dependency_report;
 use framebolt_egui::{app::SharedApp, panels::{PanelContext, PanelId, PanelLocation, PanelRegistry, Platform, canvas::CanvasPanel, timeline::TimelinePanel, tools::ToolsPanel}, renderer::{SharedRenderer, prepare_renderer_then}};
 
 pub struct FrameboltDesktopApp {
@@ -249,7 +250,11 @@ impl eframe::App for FrameboltDesktopApp {
                             
                             menu_item_with_shortcut(ui, "Undo", "Ctrl+Z");
                             menu_item_with_shortcut(ui, "Redo", "Ctrl+Y");
-                        })
+                        });
+                        ui.menu_button("Debug", |ui| {
+                            
+                            ui.label(dependency_report());
+                        });
                     });
                 });
                 
