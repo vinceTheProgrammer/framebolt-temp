@@ -12,7 +12,7 @@ jobs:
   # Debian / .deb
   # ------------------------------------------------------------
   build-deb:
-    name: Build Debian package
+    name: Build & Package Debian package
     runs-on: ubuntu-22.04
 
     steps:
@@ -56,7 +56,7 @@ jobs:
   # Fedora / RPM
   # ------------------------------------------------------------
   build-rpm-fedora:
-    name: Build Fedora RPM
+    name: Build & Package Fedora RPM
     runs-on: ubuntu-22.04
 
     steps:
@@ -135,7 +135,7 @@ jobs:
   # openSUSE Leap / RPM
   # ------------------------------------------------------------
   build-rpm-opensuse:
-    name: Build openSUSE RPM
+    name: Build & Package openSUSE RPM
     runs-on: ubuntu-22.04
 
     steps:
@@ -220,7 +220,7 @@ jobs:
   # the Rust/GStreamer stack.
   # ------------------------------------------------------------
   build-appimage:
-    name: Build AppImage
+    name: Build & Package AppImage
     runs-on: ubuntu-22.04
 
     steps:
@@ -315,7 +315,7 @@ jobs:
   # Flatpak
   # ------------------------------------------------------------
   build-flatpak:
-    name: Build Flatpak
+    name: Build & Package Flatpak & Snap
     runs-on: ubuntu-22.04
 
     steps:
@@ -326,7 +326,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-          build-essential \
+            build-essential \
             pkg-config \
             libgstreamer1.0-dev \
             libglib2.0-dev \
@@ -343,6 +343,11 @@ jobs:
             org.freedesktop.Platform//24.08 \
             org.freedesktop.Sdk//24.08
 
+      - name: Install Snapcraft
+        uses: snapcore/action-setup@v1
+        with:
+          snapcraft_channel: 8.x
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
@@ -356,9 +361,14 @@ jobs:
         run: |
           ./scripts/linux/package_flatpak.sh
 
+      - name: Package Snap
+        run: |
+          ./scripts/linux/package_snap.sh
+
       - name: Upload Flatpak artifact
         uses: actions/upload-artifact@v4
         with:
           name: framebolt-flatpak
           path: dist/*.flatpak
+          path: dist/*.snap
           if-no-files-found: error
