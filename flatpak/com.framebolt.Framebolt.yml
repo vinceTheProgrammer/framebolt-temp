@@ -1,0 +1,28 @@
+app-id: com.framebolt.Framebolt
+runtime: org.freedesktop.Platform
+runtime-version: "24.08"
+sdk: org.freedesktop.Sdk
+command: framebolt
+
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --filesystem=home
+
+modules:
+  - name: framebolt
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 framebolt /app/bin/framebolt
+      - install -Dm644 framebolt.png /app/share/icons/hicolor/96x96/apps/framebolt.png
+      - install -Dm644 com.framebolt.Framebolt.desktop /app/share/applications/com.framebolt.Framebolt.desktop
+    sources:
+      - type: file
+        path: ../target/release/framebolt-desktop
+        dest-filename: framebolt
+      - type: file
+        path: ../framebolt.png
+      - type: file
+        path: com.framebolt.Framebolt.desktop

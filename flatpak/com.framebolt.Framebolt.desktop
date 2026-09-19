@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Framebolt
+Comment=Framebolt
+Exec=framebolt
+Icon=com.framebolt.Framebolt
+Terminal=false
+Type=Application
+Categories=AudioVideo;

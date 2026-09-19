@@ -18,15 +18,26 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libunwind-dev
           sudo apt-get install -y \
+            libunwind-dev \
             build-essential \
             pkg-config \
             libgstreamer1.0-dev \
             libglib2.0-dev \
             python3 \
             dpkg-dev \
-            libfuse2
+            libfuse2 \
+            flatpak \
+            flatpak-builder
+
+      - name: Install Flatpak runtime
+        run: |
+          sudo flatpak remote-add --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo
+
+          flatpak install -y flathub \
+            org.freedesktop.Platform//24.08 \
+            org.freedesktop.Sdk//24.08
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -57,30 +68,32 @@ jobs:
 
       - name: Package RPM
         run: |
-         docker run --rm \
-          -v "$GITHUB_WORKSPACE:/workspace" \
-          -w /workspace \
-          fedora:44 \
-          bash -c '
-            dnf install -y \
-              cargo \
-              rpm-build \
-              tar \
-              gzip \
-              python3
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            fedora:44 \
+            bash -c '
+              dnf install -y \
+                cargo \
+                rpm-build \
+                tar \
+                gzip \
+                python3
 
-            ./scripts/linux/package_rpm.sh
-          '
+              ./scripts/linux/package_rpm.sh
+            '
 
-      # - name: Package Flatpak
-      #   run: |
-      #     ./scripts/linux/package_flatpak.sh
+      - name: Package Flatpak
+        run: |
+          ./scripts/linux/package_flatpak.sh
 
-      - name: Upload Linux artifacts 
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: framebolt-linux 
-          path: | 
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: framebolt-linux
+          path: |
             dist/*.AppImage
             dist/*.deb
+            dist/*.rpm
+            dist/*.flatpak
           if-no-files-found: error
