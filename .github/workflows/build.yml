@@ -45,7 +45,7 @@ jobs:
           ./scripts/linux/package_deb.sh
 
       - name: Upload Debian artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: framebolt-deb
           path: dist/*.deb
@@ -124,7 +124,7 @@ jobs:
             '
 
       - name: Upload Fedora RPM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: framebolt-rpm-fedora
           path: dist/*.rpm
@@ -205,7 +205,7 @@ jobs:
             '
 
       - name: Upload openSUSE RPM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: framebolt-rpm-opensuse
           path: dist/*.rpm
@@ -304,7 +304,7 @@ jobs:
             '
 
       - name: Upload AppImage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: framebolt-appimage
           path: dist/*.AppImage
@@ -357,7 +357,7 @@ jobs:
           ./scripts/linux/package_flatpak.sh
 
       - name: Upload Flatpak artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: framebolt-flatpak
           path: dist/*.flatpak
@@ -388,7 +388,7 @@ jobs:
           cp "${{ steps.snapcraft.outputs.snap }}" dist/
 
       - name: Upload Snap artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: framebolt-snap
           path: dist/*.snap
@@ -441,7 +441,7 @@ jobs:
           readelf -d dist/framebolt-x86_64 | grep NEEDED
 
       - name: Upload Arch binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: framebolt-x86_64
           path: dist/framebolt-x86_64
