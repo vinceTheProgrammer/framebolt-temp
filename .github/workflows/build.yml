@@ -312,10 +312,10 @@ jobs:
 
 
   # ------------------------------------------------------------
-  # Flatpak & Snap
+  # Flatpak
   # ------------------------------------------------------------
-  build-flatpak-snap:
-    name: Build & Package Flatpak & Snap
+  build-flatpak:
+    name: Build & Package Flatpak
     runs-on: ubuntu-22.04
 
     steps:
@@ -356,7 +356,25 @@ jobs:
         run: |
           ./scripts/linux/package_flatpak.sh
 
-      - name: Generate Snap package
+      - name: Upload Flatpak artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: framebolt-flatpak
+          path: dist/*.flatpak
+          if-no-files-found: error
+
+  build-snap:
+    name: Build & Package Snap
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Prepare Snap package
         run: |
           ./scripts/linux/init_package_snap.sh
 
@@ -368,13 +386,6 @@ jobs:
         run: |
           mkdir -p dist
           cp "${{ steps.snapcraft.outputs.snap }}" dist/
-
-      - name: Upload Flatpak artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: framebolt-flatpak
-          path: dist/*.flatpak
-          if-no-files-found: error
 
       - name: Upload Snap artifact
         uses: actions/upload-artifact@v4
