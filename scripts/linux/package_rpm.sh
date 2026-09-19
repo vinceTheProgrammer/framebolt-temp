@@ -47,6 +47,8 @@ Version:        ${VERSION}
 Release:        1%{?dist}
 Summary:        Framebolt
 
+%global debug_package %{nil}
+
 License:        Proprietary
 URL:            https://github.com/
 

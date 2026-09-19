@@ -16,3 +16,4 @@ deb/
 *.AppImage
 *.deb
 dist/
+rpm/
