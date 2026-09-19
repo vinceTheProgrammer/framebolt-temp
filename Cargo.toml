@@ -16,7 +16,7 @@ wasmtime = "42.0.1"
 glam = "0.32.1"
 wgpu = "27.0.1"
 
-[workspace.profile.release]
+[profile.release]
 lto = "thin"
 codegen-units = 1
 panic = "abort"
