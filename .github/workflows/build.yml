@@ -35,7 +35,7 @@ jobs:
           sudo flatpak remote-add --if-not-exists flathub \
             https://dl.flathub.org/repo/flathub.flatpakrepo
 
-          sudo flatpak install -y flathub \
+          sudo flatpak install --system -y flathub \
             org.freedesktop.Platform//24.08 \
             org.freedesktop.Sdk//24.08
 
@@ -50,21 +50,74 @@ jobs:
 
           sudo chmod +x /usr/local/bin/linuxdeploy
 
+      # Build the normal Linux binary first.
+      # This binary is used by the Debian and RPM packages.
       - name: Build Framebolt
         run: |
           cargo build -p framebolt-desktop --release
-
-      - name: Package AppImage
-        run: |
-          ./scripts/linux/package_appimage.sh
 
       - name: Package Debian
         run: |
           ./scripts/linux/package_deb.sh
 
-      # - name: Package AUR
-      #   run: |
-      #     ./scripts/linux/package_aur.sh
+      # Build the AppImage entirely inside CentOS 7 so that
+      # the resulting binary is linked against an older glibc.
+      - name: Package AppImage in CentOS
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            quay.io/centos/centos:7 \
+            bash -c '
+              set -euo pipefail
+
+              # CentOS 7 is EOL, so use the vault repositories.
+              sed -i "s|mirror.centos.org|vault.centos.org|g" /etc/yum.repos.d/CentOS-*.repo
+              sed -i "s|^mirrorlist=|#mirrorlist=|g" /etc/yum.repos.d/CentOS-*.repo
+              sed -i "s|^#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-*.repo
+
+              yum clean all
+              yum makecache
+
+              yum install -y \
+                curl \
+                gcc \
+                gcc-c++ \
+                make \
+                pkgconfig \
+                python3 \
+                libunwind-devel \
+                gstreamer1-devel \
+                glib2-devel
+
+              # Install Rust stable.
+              curl --proto "=https" --tlsv1.2 -sSf \
+                https://sh.rustup.rs | sh -s -- -y
+
+              source "$HOME/.cargo/env"
+
+              # Build the release binary in the CentOS environment.
+              cargo build -p framebolt-desktop --release
+
+              # Download linuxdeploy inside the container.
+              curl -L \
+                -o /usr/local/bin/linuxdeploy \
+                https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
+
+              chmod +x /usr/local/bin/linuxdeploy
+
+              # AppImage execution does not require FUSE when using
+              # linuxdeploy this way.
+              export APPIMAGE_EXTRACT_AND_RUN=1
+
+              ./scripts/linux/package_appimage.sh
+            '
+
+      # The AppImage build above overwrites target/release with the
+      # CentOS-built binary. Rebuild the normal binary before RPM.
+      - name: Rebuild Framebolt for RPM
+        run: |
+          cargo build -p framebolt-desktop --release
 
       - name: Package RPM
         run: |
