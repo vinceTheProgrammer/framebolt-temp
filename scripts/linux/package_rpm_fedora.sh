@@ -4,21 +4,24 @@ set -euo pipefail
 VERSION="$(cargo metadata --format-version 1 --no-deps | python3 -c 'import json, sys; print(json.load(sys.stdin)["packages"][0]["version"])')"
 PACKAGE_NAME="framebolt"
 ARCH="x86_64"
+DISTRO="fedora"
 
-echo "Packaging ${PACKAGE_NAME} ${VERSION}..."
+echo "Packaging ${PACKAGE_NAME} ${VERSION} for Fedora..."
 
 rm -rf rpm
 
-mkdir -p rpm/BUILD
-mkdir -p rpm/BUILDROOT
-mkdir -p rpm/RPMS
-mkdir -p rpm/SOURCES
-mkdir -p rpm/SPECS
-mkdir -p rpm/SRPMS
+mkdir -p \
+    rpm/BUILD \
+    rpm/BUILDROOT \
+    rpm/RPMS \
+    rpm/SOURCES \
+    rpm/SPECS \
+    rpm/SRPMS
 
-mkdir -p rpm/SOURCES/usr/bin
-mkdir -p rpm/SOURCES/usr/share/applications
-mkdir -p rpm/SOURCES/usr/share/icons/hicolor/96x96/apps
+mkdir -p \
+    rpm/SOURCES/usr/bin \
+    rpm/SOURCES/usr/share/applications \
+    rpm/SOURCES/usr/share/icons/hicolor/96x96/apps
 
 cp target/release/framebolt-desktop \
     rpm/SOURCES/usr/bin/framebolt
@@ -93,9 +96,14 @@ rpmbuild \
     --define "_topdir $(pwd)/rpm" \
     -bb rpm/SPECS/framebolt.spec
 
-OUTPUT="dist/${PACKAGE_NAME}-${VERSION}-1.${ARCH}.rpm"
-
 BUILT_RPM="$(find rpm/RPMS/${ARCH} -name '*.rpm' -type f | head -n 1)"
+
+if [[ -z "${BUILT_RPM}" ]]; then
+    echo "ERROR: No Fedora RPM was produced."
+    exit 1
+fi
+
+OUTPUT="dist/${PACKAGE_NAME}-${VERSION}-1.${ARCH}-fedora.rpm"
 
 cp "${BUILT_RPM}" "${OUTPUT}"
 

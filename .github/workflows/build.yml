@@ -113,27 +113,82 @@ jobs:
               ./scripts/linux/package_appimage.sh
             '
 
-      # The AppImage build above overwrites target/release with the
-      # CentOS-built binary. Rebuild the normal binary before RPM.
-      - name: Rebuild Framebolt for RPM
-        run: |
-          cargo build -p framebolt-desktop --release
-
-      - name: Package RPM
+      - name: Package RPM - Fedora
         run: |
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/workspace" \
             -w /workspace \
             fedora:44 \
             bash -c '
+              set -euo pipefail
+
               dnf install -y \
-                cargo \
+                curl \
+                gcc \
+                gcc-c++ \
+                make \
+                pkg-config \
+                python3 \
                 rpm-build \
                 tar \
                 gzip \
-                python3
+                gstreamer1 \
+                gstreamer1-devel \
+                gstreamer1-plugins-base \
+                gstreamer1-plugins-base-devel
 
-              ./scripts/linux/package_rpm.sh
+              curl --proto "=https" \
+                --tlsv1.2 \
+                -sSf \
+                https://sh.rustup.rs \
+                | sh -s -- -y
+
+              source "$HOME/.cargo/env"
+
+              cargo build \
+                -p framebolt-desktop \
+                --release
+
+              ./scripts/linux/package_rpm_fedora.sh
+            '
+
+      - name: Package RPM - openSUSE
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            opensuse/leap:15.6 \
+            bash -c '
+              set -euo pipefail
+
+              zypper --non-interactive refresh
+
+              zypper --non-interactive install \
+                curl \
+                gcc \
+                gcc-c++ \
+                make \
+                pkg-config \
+                python3 \
+                rpm-build \
+                tar \
+                gzip \
+                gstreamer-devel \
+                gstreamer
+
+              curl --proto "=https" \
+                --tlsv1.2 \
+                -sSf \
+                https://sh.rustup.rs \
+                | sh -s -- -y
+
+              source "$HOME/.cargo/env"
+
+              cargo build \
+                -p framebolt-desktop \
+                --release
+
+              ./scripts/linux/package_rpm_opensuse.sh
             '
 
       - name: Package Flatpak
