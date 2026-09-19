@@ -382,8 +382,11 @@ jobs:
   build-arch:
     name: Build & Package Arch
     runs-on: ubuntu-22.04
-    
+
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Build Arch binary
         run: |
           docker run --rm \
@@ -392,7 +395,7 @@ jobs:
             archlinux:latest \
             bash -c '
               set -e
-
+              
               pacman -Syu --noconfirm
 
               pacman -S --noconfirm \
@@ -416,6 +419,11 @@ jobs:
                 target/release/framebolt-desktop \
                 dist/framebolt-x86_64
             '
+
+      - name: Verify Arch binary
+        run: |
+          file dist/framebolt-x86_64
+          readelf -d dist/framebolt-x86_64 | grep NEEDED
 
       - name: Upload Arch binary
         uses: actions/upload-artifact@v4
