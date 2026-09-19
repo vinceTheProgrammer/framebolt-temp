@@ -8,7 +8,11 @@ on:
   pull_request:
 
 jobs:
-  build-linux:
+  # ------------------------------------------------------------
+  # Debian / .deb
+  # ------------------------------------------------------------
+  build-deb:
+    name: Build Debian package
     runs-on: ubuntu-22.04
 
     steps:
@@ -19,140 +23,47 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libunwind-dev \
             build-essential \
             pkg-config \
             libgstreamer1.0-dev \
             libglib2.0-dev \
+            libunwind-dev \
             python3 \
-            dpkg-dev \
-            libfuse2 \
-            flatpak \
-            flatpak-builder
-
-      - name: Install Flatpak runtime
-        run: |
-          sudo flatpak remote-add --if-not-exists flathub \
-            https://dl.flathub.org/repo/flathub.flatpakrepo
-
-          sudo flatpak install --system -y flathub \
-            org.freedesktop.Platform//24.08 \
-            org.freedesktop.Sdk//24.08
+            dpkg-dev
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install linuxdeploy
-        run: |
-          sudo curl -L \
-            -o /usr/local/bin/linuxdeploy \
-            https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
-
-          sudo chmod +x /usr/local/bin/linuxdeploy
-
-      # Build the normal Linux binary first.
-      # This binary is used by the Debian and RPM packages.
       - name: Build Framebolt
         run: |
-          cargo build -p framebolt-desktop --release
+          cargo build \
+            -p framebolt-desktop \
+            --release
 
       - name: Package Debian
         run: |
           ./scripts/linux/package_deb.sh
 
-      # Build the AppImage entirely inside CentOS 7 so that
-      # the resulting binary is linked against an older glibc.
-      - name: Package AppImage in CentOS 7
-        run: |
-          docker run --rm \
-            -v "$GITHUB_WORKSPACE:/workspace" \
-            -w /workspace \
-            quay.io/centos/centos:7 \
-            bash -c '
-              set -euo pipefail
+      - name: Upload Debian artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: framebolt-deb
+          path: dist/*.deb
+          if-no-files-found: error
 
-              echo "==> Configuring CentOS 7 repositories"
 
-              rm -f /etc/yum.repos.d/CentOS-Base.repo
+  # ------------------------------------------------------------
+  # Fedora / RPM
+  # ------------------------------------------------------------
+  build-rpm-fedora:
+    name: Build Fedora RPM
+    runs-on: ubuntu-22.04
 
-              printf "%s\n" \
-                "[base]" \
-                "name=CentOS-7.9.2009 - Base" \
-                "baseurl=http://vault.centos.org/centos/7.9.2009/os/\$basearch/" \
-                "enabled=1" \
-                "gpgcheck=1" \
-                "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7" \
-                "" \
-                "[updates]" \
-                "name=CentOS-7.9.2009 - Updates" \
-                "baseurl=http://vault.centos.org/centos/7.9.2009/updates/\$basearch/" \
-                "enabled=1" \
-                "gpgcheck=1" \
-                "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7" \
-                "" \
-                "[extras]" \
-                "name=CentOS-7.9.2009 - Extras" \
-                "baseurl=http://vault.centos.org/centos/7.9.2009/extras/\$basearch/" \
-                "enabled=1" \
-                "gpgcheck=1" \
-                "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7" \
-                > /etc/yum.repos.d/CentOS-Vault.repo
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-              yum clean all
-              yum makecache
-
-              echo "==> Installing build dependencies"
-
-              yum install -y \
-                curl \
-                gcc \
-                gcc-c++ \
-                make \
-                pkgconfig \
-                python3 \
-                libunwind-devel \
-                gstreamer1-devel \
-                glib2-devel
-
-              echo "==> Installing Rust"
-
-              curl --proto "=https" --tlsv1.2 -sSf \
-                https://sh.rustup.rs | sh -s -- -y
-
-              source "$HOME/.cargo/env"
-
-              echo "==> Rust version"
-              rustc --version
-              cargo --version
-
-              echo "==> Building Framebolt"
-
-              cargo build -p framebolt-desktop --release
-
-              test -x target/release/framebolt-desktop
-
-              echo "==> Downloading linuxdeploy"
-
-              curl -fL \
-                -o /usr/local/bin/linuxdeploy \
-                https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
-
-              chmod +x /usr/local/bin/linuxdeploy
-
-              echo "==> Packaging AppImage"
-
-              export APPIMAGE_EXTRACT_AND_RUN=1
-
-              ./scripts/linux/package_appimage.sh
-
-              echo "==> AppImage output"
-
-              ls -lah dist/
-
-              test -n "$(find dist -maxdepth 1 -name "*.AppImage" -print -quit)"
-            '
-
-      - name: Package RPM - Fedora
+      - name: Build RPM - Fedora
         run: |
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/workspace" \
@@ -160,6 +71,8 @@ jobs:
             fedora:44 \
             bash -c '
               set -euo pipefail
+
+              echo "==> Installing Fedora dependencies"
 
               dnf install -y \
                 curl \
@@ -176,6 +89,8 @@ jobs:
                 gstreamer1-plugins-base \
                 gstreamer1-plugins-base-devel
 
+              echo "==> Installing Rust"
+
               curl --proto "=https" \
                 --tlsv1.2 \
                 -sSf \
@@ -184,14 +99,50 @@ jobs:
 
               source "$HOME/.cargo/env"
 
+              echo "==> Toolchain"
+
+              rustc --version
+              cargo --version
+
+              echo "==> Building Framebolt"
+
               cargo build \
                 -p framebolt-desktop \
                 --release
 
+              test -x target/release/framebolt-desktop
+
+              echo "==> Packaging Fedora RPM"
+
               ./scripts/linux/package_rpm_fedora.sh
+
+              echo "==> RPM output"
+
+              ls -lah dist/
+
+              test -n "$(find dist -maxdepth 1 -name "*.rpm" -print -quit)"
             '
 
-      - name: Package RPM - openSUSE
+      - name: Upload Fedora RPM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: framebolt-rpm-fedora
+          path: dist/*.rpm
+          if-no-files-found: error
+
+
+  # ------------------------------------------------------------
+  # openSUSE Leap / RPM
+  # ------------------------------------------------------------
+  build-rpm-opensuse:
+    name: Build openSUSE RPM
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build RPM - openSUSE
         run: |
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/workspace" \
@@ -200,7 +151,11 @@ jobs:
             bash -c '
               set -euo pipefail
 
+              echo "==> Refreshing openSUSE repositories"
+
               zypper --non-interactive refresh
+
+              echo "==> Installing openSUSE dependencies"
 
               zypper --non-interactive install \
                 curl \
@@ -215,6 +170,8 @@ jobs:
                 gstreamer-devel \
                 gstreamer
 
+              echo "==> Installing Rust"
+
               curl --proto "=https" \
                 --tlsv1.2 \
                 -sSf \
@@ -223,24 +180,178 @@ jobs:
 
               source "$HOME/.cargo/env"
 
+              echo "==> Toolchain"
+
+              rustc --version
+              cargo --version
+
+              echo "==> Building Framebolt"
+
               cargo build \
                 -p framebolt-desktop \
                 --release
 
+              test -x target/release/framebolt-desktop
+
+              echo "==> Packaging openSUSE RPM"
+
               ./scripts/linux/package_rpm_opensuse.sh
+
+              echo "==> RPM output"
+
+              ls -lah dist/
+
+              test -n "$(find dist -maxdepth 1 -name "*.rpm" -print -quit)"
             '
+
+      - name: Upload openSUSE RPM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: framebolt-rpm-opensuse
+          path: dist/*.rpm
+          if-no-files-found: error
+
+
+  # ------------------------------------------------------------
+  # AppImage
+  #
+  # Built inside Rocky Linux 8 to target an older glibc while
+  # still providing a sufficiently modern Linux userspace for
+  # the Rust/GStreamer stack.
+  # ------------------------------------------------------------
+  build-appimage:
+    name: Build AppImage
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build AppImage in Rocky Linux 8
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            rockylinux:8 \
+            bash -c '
+              set -euo pipefail
+
+              echo "==> Installing dependencies"
+
+              dnf install -y \
+                epel-release
+
+              dnf install -y \
+                curl \
+                gcc \
+                gcc-c++ \
+                make \
+                pkgconf-pkg-config \
+                python3 \
+                libunwind-devel \
+                gstreamer1-devel \
+                glib2-devel
+
+              echo "==> Installing Rust"
+
+              curl --proto "=https" \
+                --tlsv1.2 \
+                -sSf \
+                https://sh.rustup.rs \
+                | sh -s -- -y
+
+              source "$HOME/.cargo/env"
+
+              echo "==> Toolchain"
+
+              rustc --version
+              cargo --version
+
+              echo "==> GStreamer"
+
+              pkg-config --modversion gstreamer-1.0
+              pkg-config --cflags --libs gstreamer-1.0
+
+              echo "==> Building Framebolt"
+
+              cargo build \
+                -p framebolt-desktop \
+                --release
+
+              test -x target/release/framebolt-desktop
+
+              echo "==> Installing linuxdeploy"
+
+              curl -fL \
+                -o /usr/local/bin/linuxdeploy \
+                https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
+
+              chmod +x /usr/local/bin/linuxdeploy
+
+              export APPIMAGE_EXTRACT_AND_RUN=1
+
+              echo "==> Packaging AppImage"
+
+              ./scripts/linux/package_appimage.sh
+
+              echo "==> AppImage output"
+
+              ls -lah dist/
+
+              test -n "$(find dist -maxdepth 1 -name "*.AppImage" -print -quit)"
+            '
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: framebolt-appimage
+          path: dist/*.AppImage
+          if-no-files-found: error
+
+
+  # ------------------------------------------------------------
+  # Flatpak
+  # ------------------------------------------------------------
+  build-flatpak:
+    name: Build Flatpak
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Flatpak tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            flatpak \
+            flatpak-builder
+
+      - name: Install Flatpak runtime
+        run: |
+          sudo flatpak remote-add --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo
+
+          sudo flatpak install --system -y flathub \
+            org.freedesktop.Platform//24.08 \
+            org.freedesktop.Sdk//24.08
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build Framebolt
+        run: |
+          cargo build \
+            -p framebolt-desktop \
+            --release
 
       - name: Package Flatpak
         run: |
           ./scripts/linux/package_flatpak.sh
 
-      - name: Upload Linux artifacts
+      - name: Upload Flatpak artifact
         uses: actions/upload-artifact@v4
         with:
-          name: framebolt-linux
-          path: |
-            dist/*.AppImage
-            dist/*.deb
-            dist/*.rpm
-            dist/*.flatpak
+          name: framebolt-flatpak
+          path: dist/*.flatpak
           if-no-files-found: error
