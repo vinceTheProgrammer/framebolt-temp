@@ -12,7 +12,7 @@ jobs:
   # Debian / .deb
   # ------------------------------------------------------------
   build-deb:
-    name: Build & Package Debian package
+    name: Build & Package Debian
     runs-on: ubuntu-22.04
 
     steps:
@@ -370,5 +370,56 @@ jobs:
         with:
           name: framebolt-flatpak
           path: dist/*.flatpak
+          if-no-files-found: error
+
+      - name: Upload Snap artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: framebolt-flatpak
           path: dist/*.snap
+          if-no-files-found: error
+
+  build-arch:
+    name: Build & Package Arch
+    runs-on: ubuntu-22.04
+    
+    steps:
+      - name: Build Arch binary
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            archlinux:latest \
+            bash -c '
+              set -e
+
+              pacman -Syu --noconfirm
+
+              pacman -S --noconfirm \
+                base-devel \
+                curl \
+                pkgconf \
+                python \
+                gstreamer \
+                gst-plugins-base \
+                glib2
+
+              curl --proto "=https" --tlsv1.2 -sSf \
+                https://sh.rustup.rs | sh -s -- -y
+
+              source "$HOME/.cargo/env"
+
+              cargo build -p framebolt-desktop --release
+
+              mkdir -p dist
+              install -Dm755 \
+                target/release/framebolt-desktop \
+                dist/framebolt-x86_64
+            '
+
+      - name: Upload Arch binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: framebolt-x86_64
+          path: dist/framebolt-x86_64
           if-no-files-found: error
