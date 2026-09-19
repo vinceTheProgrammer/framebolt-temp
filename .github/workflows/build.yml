@@ -402,7 +402,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Arch binary
+      - name: Build Arch binary & generate AUR packages
         run: |
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/workspace" \
@@ -410,12 +410,13 @@ jobs:
             archlinux:latest \
             bash -c '
               set -e
-              
+
               pacman -Syu --noconfirm
 
               pacman -S --noconfirm \
                 base-devel \
                 curl \
+                jq \
                 pkgconf \
                 python \
                 gstreamer \
@@ -427,22 +428,41 @@ jobs:
 
               source "$HOME/.cargo/env"
 
-              cargo build -p framebolt-desktop --release
+              echo "==> Building native Arch binary..."
+
+              cargo build \
+                -p framebolt-desktop \
+                --release
 
               mkdir -p dist
+
               install -Dm755 \
                 target/release/framebolt-desktop \
                 dist/framebolt-x86_64
+
+              echo "==> Verifying Arch binary..."
+
+              file dist/framebolt-x86_64
+
+              readelf -d dist/framebolt-x86_64 | grep NEEDED
+
+              echo "==> Generating AUR packages..."
+
+              chmod +x scripts/linux/package_aur.sh
+
+              ./scripts/linux/package_aur.sh dist/aur
             '
 
-      - name: Verify Arch binary
-        run: |
-          file dist/framebolt-x86_64
-          readelf -d dist/framebolt-x86_64 | grep NEEDED
+      -   name: Upload Arch binary
+          uses: actions/upload-artifact@v7
+          with:
+            name: framebolt-x86_64
+            path: dist/framebolt-x86_64
+            if-no-files-found: error
 
-      - name: Upload Arch binary
-        uses: actions/upload-artifact@v7
-        with:
-          name: framebolt-x86_64
-          path: dist/framebolt-x86_64
-          if-no-files-found: error
+      -   name: Upload AUR packages
+          uses: actions/upload-artifact@v7
+          with:
+            name: framebolt-aur
+            path: dist/aur/
+            if-no-files-found: error
