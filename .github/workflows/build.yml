@@ -35,7 +35,7 @@ jobs:
           sudo flatpak remote-add --if-not-exists flathub \
             https://dl.flathub.org/repo/flathub.flatpakrepo
 
-          flatpak install -y flathub \
+          sudo flatpak install -y flathub \
             org.freedesktop.Platform//24.08 \
             org.freedesktop.Sdk//24.08
 
