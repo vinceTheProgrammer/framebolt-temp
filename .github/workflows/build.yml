@@ -62,7 +62,7 @@ jobs:
 
       # Build the AppImage entirely inside CentOS 7 so that
       # the resulting binary is linked against an older glibc.
-      - name: Package AppImage in CentOS
+      - name: Package AppImage in CentOS 7
         run: |
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/workspace" \
@@ -71,10 +71,33 @@ jobs:
             bash -c '
               set -euo pipefail
 
-              # CentOS 7 is EOL, so use the vault repositories.
-              sed -i "s|mirror.centos.org|vault.centos.org|g" /etc/yum.repos.d/CentOS-*.repo
-              sed -i "s|^mirrorlist=|#mirrorlist=|g" /etc/yum.repos.d/CentOS-*.repo
-              sed -i "s|^#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-*.repo
+              # CentOS 7 is EOL. Replace the old mirror repositories
+              # with the fixed CentOS 7.9 vault.
+              cat > /etc/yum.repos.d/CentOS-Vault.repo <<EOF
+              [base]
+              name=CentOS-7.9.2009 - Base
+              baseurl=http://vault.centos.org/centos/7.9.2009/os/\$basearch/
+              enabled=1
+              gpgcheck=1
+              gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+
+              [updates]
+              name=CentOS-7.9.2009 - Updates
+              baseurl=http://vault.centos.org/centos/7.9.2009/updates/\$basearch/
+              enabled=1
+              gpgcheck=1
+              gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+
+              [extras]
+              name=CentOS-7.9.2009 - Extras
+              baseurl=http://vault.centos.org/centos/7.9.2009/extras/\$basearch/
+              enabled=1
+              gpgcheck=1
+              gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+              EOF
+
+              # Disable the original EOL repository definitions.
+              rm -f /etc/yum.repos.d/CentOS-Base.repo
 
               yum clean all
               yum makecache
@@ -96,18 +119,17 @@ jobs:
 
               source "$HOME/.cargo/env"
 
-              # Build the release binary in the CentOS environment.
+              # Build the release binary inside CentOS 7.
               cargo build -p framebolt-desktop --release
 
-              # Download linuxdeploy inside the container.
+              # Download linuxdeploy.
               curl -L \
                 -o /usr/local/bin/linuxdeploy \
                 https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
 
               chmod +x /usr/local/bin/linuxdeploy
 
-              # AppImage execution does not require FUSE when using
-              # linuxdeploy this way.
+              # Run AppImages without requiring FUSE.
               export APPIMAGE_EXTRACT_AND_RUN=1
 
               ./scripts/linux/package_appimage.sh
