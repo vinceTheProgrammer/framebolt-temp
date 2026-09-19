@@ -55,9 +55,22 @@ jobs:
       #   run: |
       #     ./scripts/linux/package_aur.sh
 
-      # - name: Package RPM
-      #   run: |
-      #     ./scripts/linux/package_rpm.sh
+      - name: Package RPM
+        run: |
+         docker run --rm \
+          -v "$GITHUB_WORKSPACE:/workspace" \
+          -w /workspace \
+          fedora:44 \
+          bash -c '
+            dnf install -y \
+              cargo \
+              rpm-build \
+              tar \
+              gzip \
+              python3
+
+            ./scripts/linux/package_rpm.sh
+          '
 
       # - name: Package Flatpak
       #   run: |
