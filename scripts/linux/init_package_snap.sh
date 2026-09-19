@@ -66,11 +66,3 @@ parts:
 EOF
 
 mkdir -p dist
-
-snapcraft pack snap --destructive-mode
-
-OUTPUT="dist/${PACKAGE_NAME}_${VERSION}_${ARCH}.snap"
-
-mv framebolt_${VERSION}_${ARCH}.snap "${OUTPUT}"
-
-echo "Created ${OUTPUT}"
