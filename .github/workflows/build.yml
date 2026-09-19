@@ -312,9 +312,9 @@ jobs:
 
 
   # ------------------------------------------------------------
-  # Flatpak
+  # Flatpak & Snap
   # ------------------------------------------------------------
-  build-flatpak:
+  build-flatpak-snap:
     name: Build & Package Flatpak & Snap
     runs-on: ubuntu-22.04
 
@@ -336,17 +336,12 @@ jobs:
 
       - name: Install Flatpak runtime
         run: |
-          sudo flatpak remote-add --if-not-exists flathub \
+         sudo flatpak remote-add --if-not-exists flathub \
             https://dl.flathub.org/repo/flathub.flatpakrepo
 
           sudo flatpak install --system -y flathub \
             org.freedesktop.Platform//24.08 \
             org.freedesktop.Sdk//24.08
-
-      - name: Install Snapcraft
-        uses: snapcore/action-setup@v1
-        with:
-          snapcraft_channel: 8.x
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -356,14 +351,23 @@ jobs:
           cargo build \
             -p framebolt-desktop \
             --release
-
+          
       - name: Package Flatpak
         run: |
           ./scripts/linux/package_flatpak.sh
 
-      - name: Package Snap
+      - name: Generate Snap package
         run: |
-          ./scripts/linux/package_snap.sh
+          ./scripts/linux/init_package_snap.sh
+
+      - name: Build Snap
+        uses: canonical/action-build@v1
+        id: snapcraft
+
+      - name: Copy Snap to dist
+        run: |
+          mkdir -p dist
+          cp "${{ steps.snapcraft.outputs.snap }}" dist/
 
       - name: Upload Flatpak artifact
         uses: actions/upload-artifact@v4
@@ -375,10 +379,10 @@ jobs:
       - name: Upload Snap artifact
         uses: actions/upload-artifact@v4
         with:
-          name: framebolt-flatpak
+          name: framebolt-snap
           path: dist/*.snap
           if-no-files-found: error
-
+  
   build-arch:
     name: Build & Package Arch
     runs-on: ubuntu-22.04
