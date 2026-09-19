@@ -71,36 +71,37 @@ jobs:
             bash -c '
               set -euo pipefail
 
-              # CentOS 7 is EOL. Replace the old mirror repositories
-              # with the fixed CentOS 7.9 vault.
-              cat > /etc/yum.repos.d/CentOS-Vault.repo <<EOF
-              [base]
-              name=CentOS-7.9.2009 - Base
-              baseurl=http://vault.centos.org/centos/7.9.2009/os/\$basearch/
-              enabled=1
-              gpgcheck=1
-              gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+              echo "==> Configuring CentOS 7 repositories"
 
-              [updates]
-              name=CentOS-7.9.2009 - Updates
-              baseurl=http://vault.centos.org/centos/7.9.2009/updates/\$basearch/
-              enabled=1
-              gpgcheck=1
-              gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
-
-              [extras]
-              name=CentOS-7.9.2009 - Extras
-              baseurl=http://vault.centos.org/centos/7.9.2009/extras/\$basearch/
-              enabled=1
-              gpgcheck=1
-              gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
-              EOF
-
-              # Disable the original EOL repository definitions.
               rm -f /etc/yum.repos.d/CentOS-Base.repo
+
+              printf "%s\n" \
+                "[base]" \
+                "name=CentOS-7.9.2009 - Base" \
+                "baseurl=http://vault.centos.org/centos/7.9.2009/os/\$basearch/" \
+                "enabled=1" \
+                "gpgcheck=1" \
+                "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7" \
+                "" \
+                "[updates]" \
+                "name=CentOS-7.9.2009 - Updates" \
+                "baseurl=http://vault.centos.org/centos/7.9.2009/updates/\$basearch/" \
+                "enabled=1" \
+                "gpgcheck=1" \
+                "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7" \
+                "" \
+                "[extras]" \
+                "name=CentOS-7.9.2009 - Extras" \
+                "baseurl=http://vault.centos.org/centos/7.9.2009/extras/\$basearch/" \
+                "enabled=1" \
+                "gpgcheck=1" \
+                "gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7" \
+                > /etc/yum.repos.d/CentOS-Vault.repo
 
               yum clean all
               yum makecache
+
+              echo "==> Installing build dependencies"
 
               yum install -y \
                 curl \
@@ -113,26 +114,42 @@ jobs:
                 gstreamer1-devel \
                 glib2-devel
 
-              # Install Rust stable.
+              echo "==> Installing Rust"
+
               curl --proto "=https" --tlsv1.2 -sSf \
                 https://sh.rustup.rs | sh -s -- -y
 
               source "$HOME/.cargo/env"
 
-              # Build the release binary inside CentOS 7.
+              echo "==> Rust version"
+              rustc --version
+              cargo --version
+
+              echo "==> Building Framebolt"
+
               cargo build -p framebolt-desktop --release
 
-              # Download linuxdeploy.
-              curl -L \
+              test -x target/release/framebolt-desktop
+
+              echo "==> Downloading linuxdeploy"
+
+              curl -fL \
                 -o /usr/local/bin/linuxdeploy \
                 https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage
 
               chmod +x /usr/local/bin/linuxdeploy
 
-              # Run AppImages without requiring FUSE.
+              echo "==> Packaging AppImage"
+
               export APPIMAGE_EXTRACT_AND_RUN=1
 
               ./scripts/linux/package_appimage.sh
+
+              echo "==> AppImage output"
+
+              ls -lah dist/
+
+              test -n "$(find dist -maxdepth 1 -name "*.AppImage" -print -quit)"
             '
 
       - name: Package RPM - Fedora
