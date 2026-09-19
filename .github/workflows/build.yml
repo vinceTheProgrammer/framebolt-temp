@@ -243,6 +243,7 @@ jobs:
 
               dnf install -y \
                 curl \
+                file \
                 gcc \
                 gcc-c++ \
                 make \
