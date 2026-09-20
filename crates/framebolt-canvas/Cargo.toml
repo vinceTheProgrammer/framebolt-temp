@@ -5,5 +5,5 @@ version.workspace = true
 
 [dependencies]
 bytemuck = { version = "1.25.0", features = ["derive"] }
-glam .workspace = true
+glam.workspace = true
 wgpu   = "27.0.1"

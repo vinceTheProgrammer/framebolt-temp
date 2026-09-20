@@ -450,6 +450,40 @@ jobs:
           path: dist/framebolt-x86_64
           if-no-files-found: error
 
+  build-windows:
+    name: Build & Package Windows
+    runs-on: windows-2025
+
+    steps:
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install GStreamer
+        run: ./scripts/windows/install_gstreamer.ps1
+
+      - name: Build Framebolt
+        run: cargo build -p framebolt-desktop --release
+
+      - name: Stage release folder
+        run: |
+          mkdir -p windows_release
+          mv target/release/framebolt-desktop.exe windows_release/framebolt.exe
+
+      - name: Copy GStreamer libs
+        run: ./scripts/windows/copy_dlls.ps1
+
+      - name: Package Windows portable
+        run: ./scripts/windows/package_portable.ps1
+
+      - name: Upload Windows portable artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-windows-portable
+          path: framebolt-windows.zip
+          if-no-files-found: error
+
+
   release:
     name: Create GitHub Release
     runs-on: ubuntu-22.04
@@ -462,6 +496,7 @@ jobs:
       - build-appimage
       - build-snap
       - build-arch
+      - build-windows
 
     permissions:
       contents: write

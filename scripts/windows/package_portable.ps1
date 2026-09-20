@@ -1,0 +1,1 @@
+powershell Compress-Archive -Path windows_release\\* -DestinationPath framebolt-windows.zip
