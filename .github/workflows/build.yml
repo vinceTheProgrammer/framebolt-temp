@@ -549,18 +549,16 @@ jobs:
           path: dist/aur/
           if-no-files-found: error
 
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(cargo metadata --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["packages"][0]["version"])')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
       - name: Upload AUR files to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="$(
-            cargo metadata \
-              --format-version 1 \
-              --no-deps |
-            python3 -c \
-              'import json, sys; print(json.load(sys.stdin)["packages"][0]["version"])'
-          )
-
           tar -czf "framebolt-aur-v${VERSION}.tar.gz" \
             -C dist/aur \
             framebolt \
