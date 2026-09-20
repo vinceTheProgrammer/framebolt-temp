@@ -402,7 +402,124 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Arch binary & generate AUR packages
+      - name: Build Arch binary
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            archlinux:latest \
+            bash -c '
+              set -e
+
+              pacman -Syu --noconfirm
+
+              pacman -S --noconfirm \
+                base-devel \
+                curl \
+                pkgconf \
+                python \
+                gstreamer \
+                gst-plugins-base \
+                glib2
+
+              curl --proto "=https" --tlsv1.2 -sSf \
+                https://sh.rustup.rs | sh -s -- -y
+
+              source "$HOME/.cargo/env"
+
+              cargo build \
+                -p framebolt-desktop \
+                --release
+
+              mkdir -p dist
+
+              install -Dm755 \
+                target/release/framebolt-desktop \
+                dist/framebolt-x86_64
+            '
+
+      - name: Verify Arch binary
+        run: |
+          file dist/framebolt-x86_64
+          readelf -d dist/framebolt-x86_64 | grep NEEDED
+
+      - name: Upload Arch binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-x86_64
+          path: dist/framebolt-x86_64
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-22.04
+
+    needs:
+      - build-deb
+      - build-rpm-fedora
+      - build-rpm-opensuse
+      - build-flatpak
+      - build-appimage
+      - build-snap
+      - build-arch
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION="$(
+            cargo metadata \
+              --format-version 1 \
+              --no-deps |
+            python3 -c \
+              'import json, sys; print(json.load(sys.stdin)["packages"][0]["version"])'
+          )
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: release-artifacts
+          pattern: '*'
+          merge-multiple: true
+
+      - name: List release artifacts
+        run: |
+          find release-artifacts \
+            -type f \
+            -maxdepth 2 \
+            -print
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create \
+            "v${VERSION}" \
+            release-artifacts/* \
+            --title "Framebolt v${VERSION}" \
+            --generate-notes
+
+  package-aur:
+    name: Package AUR
+    runs-on: ubuntu-22.04
+
+    needs:
+      - release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate AUR packages
         run: |
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/workspace" \
@@ -418,51 +535,39 @@ jobs:
                 curl \
                 jq \
                 pkgconf \
-                python \
-                gstreamer \
-                gst-plugins-base \
-                glib2
-
-              curl --proto "=https" --tlsv1.2 -sSf \
-                https://sh.rustup.rs | sh -s -- -y
-
-              source "$HOME/.cargo/env"
-
-              echo "==> Building native Arch binary..."
-
-              cargo build \
-                -p framebolt-desktop \
-                --release
-
-              mkdir -p dist
-
-              install -Dm755 \
-                target/release/framebolt-desktop \
-                dist/framebolt-x86_64
-
-              echo "==> Verifying Arch binary..."
-
-              file dist/framebolt-x86_64
-
-              readelf -d dist/framebolt-x86_64 | grep NEEDED
-
-              echo "==> Generating AUR packages..."
+                python
 
               chmod +x scripts/linux/package_aur.sh
 
               ./scripts/linux/package_aur.sh dist/aur
             '
 
-      -   name: Upload Arch binary
-          uses: actions/upload-artifact@v7
-          with:
-            name: framebolt-x86_64
-            path: dist/framebolt-x86_64
-            if-no-files-found: error
+      - name: Upload AUR package artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-aur
+          path: dist/aur/
+          if-no-files-found: error
 
-      -   name: Upload AUR packages
-          uses: actions/upload-artifact@v7
-          with:
-            name: framebolt-aur
-            path: dist/aur/
-            if-no-files-found: error
+      - name: Upload AUR files to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(
+            cargo metadata \
+              --format-version 1 \
+              --no-deps |
+            python3 -c \
+              'import json, sys; print(json.load(sys.stdin)["packages"][0]["version"])'
+          )
+
+          tar -czf "framebolt-aur-v${VERSION}.tar.gz" \
+            -C dist/aur \
+            framebolt \
+            framebolt-bin \
+            framebolt-git
+
+          gh release upload \
+            "v${VERSION}" \
+            "framebolt-aur-v${VERSION}.tar.gz" \
+            --clobber
