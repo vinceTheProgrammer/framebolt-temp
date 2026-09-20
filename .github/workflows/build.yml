@@ -467,65 +467,123 @@ jobs:
       - name: Install GStreamer
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
+
           $GStreamerVersion = "1.24.13"
+          $GStreamerRoot = "$env:RUNNER_TEMP\gstreamer"
 
-          $GStreamerRoot = "C:\gstreamer\1.0\msvc_x86_64"
+          $RuntimeUrl = "https://gstreamer.freedesktop.org/data/pkg/windows/$GStreamerVersion/msvc/gstreamer-1.0-msvc-x86_64-$GStreamerVersion.zip"
+          $DevelUrl = "https://gstreamer.freedesktop.org/data/pkg/windows/$GStreamerVersion/msvc/gstreamer-1.0-devel-msvc-x86_64-$GStreamerVersion.zip"
 
-          $RuntimeUrl = "https://gstreamer.freedesktop.org/data/pkg/windows/$GStreamerVersion/msvc/gstreamer-1.0-msvc-x86_64-$GStreamerVersion.msi"
-          $DevelUrl = "https://gstreamer.freedesktop.org/data/pkg/windows/$GStreamerVersion/msvc/gstreamer-1.0-devel-msvc-x86_64-$GStreamerVersion.msi"
+          $RuntimeZip = "$env:RUNNER_TEMP\gstreamer-runtime.zip"
+          $DevelZip = "$env:RUNNER_TEMP\gstreamer-devel.zip"
 
-          $RuntimeMsi = "$env:RUNNER_TEMP\gstreamer-runtime.msi"
-          $DevelMsi = "$env:RUNNER_TEMP\gstreamer-devel.msi"
+          Remove-Item `
+            -Recurse `
+            -Force `
+            -ErrorAction SilentlyContinue `
+            $GStreamerRoot
 
           Write-Host "Downloading GStreamer runtime..."
           Invoke-WebRequest `
             -Uri $RuntimeUrl `
-            -OutFile $RuntimeMsi
+            -OutFile $RuntimeZip
 
           Write-Host "Downloading GStreamer development package..."
           Invoke-WebRequest `
             -Uri $DevelUrl `
-            -OutFile $DevelMsi
+            -OutFile $DevelZip
 
-          Write-Host "Installing GStreamer runtime..."
-          Start-Process msiexec.exe `
-            -ArgumentList "/i `"$RuntimeMsi`" /qn /norestart /l*v `"$env:RUNNER_TEMP\gstreamer-runtime.log`"" `
-            -Wait `
-            -NoNewWindow
-
-          if ($LASTEXITCODE -ne 0) {
-            throw "GStreamer runtime installation failed."
+          if (-not (Test-Path $RuntimeZip)) {
+            throw "GStreamer runtime archive was not downloaded."
           }
 
-          Write-Host "Installing GStreamer development package..."
-          Start-Process msiexec.exe `
-            -ArgumentList "/i `"$DevelMsi`" /qn /norestart /l*v `"$env:RUNNER_TEMP\gstreamer-devel.log`"" `
-            -Wait `
-            -NoNewWindow
-
-          if ($LASTEXITCODE -ne 0) {
-            throw "GStreamer development installation failed."
+          if (-not (Test-Path $DevelZip)) {
+            throw "GStreamer development archive was not downloaded."
           }
 
-          if (-not (Test-Path $GStreamerRoot)) {
-            throw "GStreamer installation was not found at $GStreamerRoot"
+          Write-Host "Runtime archive:"
+          Get-Item $RuntimeZip | Format-List FullName,Length
+
+          Write-Host "Development archive:"
+          Get-Item $DevelZip | Format-List FullName,Length
+
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            $GStreamerRoot | Out-Null
+
+          Write-Host "Extracting GStreamer runtime..."
+          Expand-Archive `
+            -Path $RuntimeZip `
+            -DestinationPath $GStreamerRoot `
+            -Force
+
+          Write-Host "Extracting GStreamer development package..."
+          Expand-Archive `
+            -Path $DevelZip `
+            -DestinationPath $GStreamerRoot `
+            -Force
+
+          Write-Host "GStreamer directory:"
+          Get-ChildItem `
+            $GStreamerRoot `
+            -Recurse |
+            Select-Object FullName
+
+          $GStreamerDir = Get-ChildItem `
+            $GStreamerRoot `
+            -Directory |
+            Select-Object -First 1
+
+          if ($null -eq $GStreamerDir) {
+            throw "Could not find extracted GStreamer directory."
           }
 
-          "$GStreamerRoot\bin" | Out-File `
-            -FilePath $env:GITHUB_PATH `
-            -Encoding utf8
+          $GStreamerPath = $GStreamerDir.FullName
 
-          Write-Host "GStreamer installed at:"
-          Write-Host "  $GStreamerRoot"
+          Write-Host "Detected GStreamer installation:"
+          Write-Host "  $GStreamerPath"
+
+          if (-not (Test-Path "$GStreamerPath\bin")) {
+            throw "GStreamer bin directory not found."
+          }
+
+          if (-not (Test-Path "$GStreamerPath\lib\pkgconfig")) {
+            throw "GStreamer pkg-config directory not found."
+          }
+
+            "$GStreamerPath\bin" | Out-File `
+              -FilePath $env:GITHUB_PATH `
+              -Encoding utf8
+
+          "GSTREAMER_ROOT=$GStreamerPath" >> $env:GITHUB_ENV
+
+          Write-Host "GStreamer installation verified."
 
       - name: Verify GStreamer
         shell: pwsh
         run: |
-          where.exe pkg-config
-          where.exe gst-launch-1.0
+          $ErrorActionPreference = "Stop"
 
-          pkg-config --modversion gstreamer-1.0
-          gst-launch-1.0 --version
+          Write-Host "GSTREAMER_ROOT=$env:GSTREAMER_ROOT"
+
+          if (-not (Test-Path "$env:GSTREAMER_ROOT\bin")) {
+            throw "GStreamer bin directory does not exist."
+          }
+
+          Get-ChildItem "$env:GSTREAMER_ROOT\bin" |
+            Select-Object Name, Length
+
+          $GstPluginPath = "$env:GSTREAMER_ROOT\lib\gstreamer-1.0"
+
+          if (-not (Test-Path $GstPluginPath)) {
+            throw "GStreamer plugin directory does not exist: $GstPluginPath"
+          }
+
+          Write-Host "GStreamer plugins:"
+          Get-ChildItem $GstPluginPath |
+            Select-Object Name, Length
 
       - name: Get version
         id: version
@@ -554,6 +612,8 @@ jobs:
       - name: Prepare Windows staging directory
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
+
           $Stage = "dist/windows-staging"
 
           Remove-Item `
@@ -571,12 +631,10 @@ jobs:
             "target/x86_64-pc-windows-msvc/release/framebolt-desktop.exe" `
             "$Stage/framebolt.exe"
 
-          $GStreamerRoot = "C:\gstreamer\1.0\msvc_x86_64"
-
-          Write-Host "Copying GStreamer runtime..."
+          Write-Host "Copying GStreamer runtime DLLs..."
 
           Copy-Item `
-            "$GStreamerRoot\bin\*.dll" `
+            "$env:GSTREAMER_ROOT\bin\*.dll" `
             "$Stage" `
             -Force
 
@@ -586,11 +644,12 @@ jobs:
             "$Stage/lib/gstreamer-1.0" | Out-Null
 
           Copy-Item `
-            "$GStreamerRoot/lib/gstreamer-1.0/*.dll" `
+            "$env:GSTREAMER_ROOT/lib/gstreamer-1.0/*.dll" `
             "$Stage/lib/gstreamer-1.0" `
             -Force
 
           Write-Host "Windows staging contents:"
+
           Get-ChildItem `
             $Stage `
             -Recurse |
@@ -605,7 +664,8 @@ jobs:
             throw "Windows binary was not created."
           }
 
-          Get-Item $Binary | Format-List Name,Length,FullName
+          Get-Item $Binary |
+            Format-List Name, Length, FullName
 
       - name: Upload Windows staging artifact
         uses: actions/upload-artifact@v7
@@ -613,7 +673,7 @@ jobs:
           name: framebolt-windows-staging
           path: dist/windows-staging/
           if-no-files-found: error
-          
+
   build-windows-portable:
     name: Build Windows Portable
     runs-on: windows-2022
