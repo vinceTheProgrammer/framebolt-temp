@@ -451,8 +451,8 @@ jobs:
           if-no-files-found: error
 
   build-windows:
-    name: Build & Package Windows
-    runs-on: windows-2025
+    name: Build Windows
+    runs-on: windows-2022
 
     steps:
       - name: Checkout
@@ -460,42 +460,248 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          target: x86_64-pc-windows-msvc
 
       - name: Install GStreamer
-        run: ./scripts/windows/install_gstreamer.ps1
-
-      - name: Setup PkgConfig (Windows)
-        env:
-          PKG_CONFIG_ZIP: "http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip"
-          GETTEXT_RUNTIME_ZIP: "http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/gettext-runtime_0.18.1.1-2_win32.zip"
-          GLIB_ZIP: "http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28/glib_2.28.8-1_win32.zip"
+        shell: pwsh
         run: |
-          curl -LO "${{ env.PKG_CONFIG_ZIP }}"
-          7z x pkg-config_0.26-1_win32.zip -oC:\pkgconf
-          mv C:\pkgconf\bin\pkg-config.exe C:\custombin\pkg-config.exe
-          echo "C:\custombin" >> $GITHUB_PATH
+          $GStreamerVersion = "1.24.13"
+
+          $GStreamerRoot = "C:\gstreamer\1.0\msvc_x86_64"
+
+          $RuntimeUrl = "https://gstreamer.freedesktop.org/data/pkg/windows/$GStreamerVersion/msvc/gstreamer-1.0-msvc-x86_64-$GStreamerVersion.msi"
+          $DevelUrl = "https://gstreamer.freedesktop.org/data/pkg/windows/$GStreamerVersion/msvc/gstreamer-1.0-devel-msvc-x86_64-$GStreamerVersion.msi"
+
+          $RuntimeMsi = "$env:RUNNER_TEMP\gstreamer-runtime.msi"
+          $DevelMsi = "$env:RUNNER_TEMP\gstreamer-devel.msi"
+
+          Write-Host "Downloading GStreamer runtime..."
+          Invoke-WebRequest `
+            -Uri $RuntimeUrl `
+            -OutFile $RuntimeMsi
+
+          Write-Host "Downloading GStreamer development package..."
+          Invoke-WebRequest `
+            -Uri $DevelUrl `
+            -OutFile $DevelMsi
+
+          Write-Host "Installing GStreamer runtime..."
+          Start-Process msiexec.exe `
+            -ArgumentList "/i `"$RuntimeMsi`" /qn /norestart /l*v `"$env:RUNNER_TEMP\gstreamer-runtime.log`"" `
+            -Wait `
+            -NoNewWindow
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "GStreamer runtime installation failed."
+          }
+
+          Write-Host "Installing GStreamer development package..."
+          Start-Process msiexec.exe `
+            -ArgumentList "/i `"$DevelMsi`" /qn /norestart /l*v `"$env:RUNNER_TEMP\gstreamer-devel.log`"" `
+            -Wait `
+            -NoNewWindow
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "GStreamer development installation failed."
+          }
+
+          if (-not (Test-Path $GStreamerRoot)) {
+            throw "GStreamer installation was not found at $GStreamerRoot"
+          }
+
+          "$GStreamerRoot\bin" | Out-File `
+            -FilePath $env:GITHUB_PATH `
+            -Encoding utf8
+
+          Write-Host "GStreamer installed at:"
+          Write-Host "  $GStreamerRoot"
+
+      - name: Verify GStreamer
+        shell: pwsh
+        run: |
+          where.exe pkg-config
+          where.exe gst-launch-1.0
+
+          pkg-config --modversion gstreamer-1.0
+          gst-launch-1.0 --version
+
+      - name: Get version
+        id: version
+        shell: pwsh
+        run: |
+          $Version = cargo metadata `
+            --format-version 1 `
+            --no-deps |
+            ConvertFrom-Json |
+            Select-Object -ExpandProperty packages |
+            Select-Object -First 1 |
+            Select-Object -ExpandProperty version
+
+          "version=$Version" >> $env:GITHUB_OUTPUT
+          "FRAMEBOLT_VERSION=$Version" >> $env:GITHUB_ENV
 
       - name: Build Framebolt
-        run: cargo build -p framebolt-desktop --release
-
-      - name: Stage release folder
+        shell: pwsh
         run: |
-          mkdir -p windows_release
-          mv target/release/framebolt-desktop.exe windows_release/framebolt.exe
+          cargo build `
+            --release `
+            --locked `
+            -p framebolt-desktop `
+            --target x86_64-pc-windows-msvc
 
-      - name: Copy GStreamer libs
-        run: ./scripts/windows/copy_dlls.ps1
+      - name: Prepare Windows staging directory
+        shell: pwsh
+        run: |
+          $Stage = "dist/windows-staging"
 
-      - name: Package Windows portable
-        run: ./scripts/windows/package_portable.ps1
+          Remove-Item `
+            -Recurse `
+            -Force `
+            -ErrorAction SilentlyContinue `
+            $Stage
+
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            $Stage | Out-Null
+
+          Copy-Item `
+            "target/x86_64-pc-windows-msvc/release/framebolt-desktop.exe" `
+            "$Stage/framebolt.exe"
+
+          $GStreamerRoot = "C:\gstreamer\1.0\msvc_x86_64"
+
+          Write-Host "Copying GStreamer runtime..."
+
+          Copy-Item `
+            "$GStreamerRoot\bin\*.dll" `
+            "$Stage" `
+            -Force
+
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            "$Stage/lib/gstreamer-1.0" | Out-Null
+
+          Copy-Item `
+            "$GStreamerRoot/lib/gstreamer-1.0/*.dll" `
+            "$Stage/lib/gstreamer-1.0" `
+            -Force
+
+          Write-Host "Windows staging contents:"
+          Get-ChildItem `
+            $Stage `
+            -Recurse |
+            Select-Object FullName, Length
+
+      - name: Verify Windows binary
+        shell: pwsh
+        run: |
+          $Binary = "dist/windows-staging/framebolt.exe"
+
+          if (-not (Test-Path $Binary)) {
+            throw "Windows binary was not created."
+          }
+
+          Get-Item $Binary | Format-List Name,Length,FullName
+
+      - name: Upload Windows staging artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-windows-staging
+          path: dist/windows-staging/
+          if-no-files-found: error
+          
+  build-windows-portable:
+    name: Build Windows Portable
+    runs-on: windows-2022
+
+    needs:
+      - build-windows
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Windows staging
+        uses: actions/download-artifact@v8
+        with:
+          name: framebolt-windows-staging
+          path: dist/windows-staging
+
+      - name: Get version
+        shell: pwsh
+        run: |
+          $Version = cargo metadata `
+            --format-version 1 `
+            --no-deps |
+            ConvertFrom-Json |
+            Select-Object -ExpandProperty packages |
+            Select-Object -First 1 |
+            Select-Object -ExpandProperty version
+
+          "FRAMEBOLT_VERSION=$Version" >> $env:GITHUB_ENV
+
+      - name: Package portable ZIP
+        shell: pwsh
+        run: |
+          ./scripts/windows/package_windows_portable.ps1
 
       - name: Upload Windows portable artifact
         uses: actions/upload-artifact@v7
         with:
           name: framebolt-windows-portable
-          path: framebolt-windows.zip
+          path: dist/*.zip
           if-no-files-found: error
 
+  build-windows-installer:
+    name: Build Windows Installer
+    runs-on: windows-2022
+
+    needs:
+      - build-windows
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Windows staging
+        uses: actions/download-artifact@v8
+        with:
+          name: framebolt-windows-staging
+          path: dist/windows-staging
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress --yes
+
+      - name: Get version
+        shell: pwsh
+        run: |
+          $Version = cargo metadata `
+            --format-version 1 `
+            --no-deps |
+            ConvertFrom-Json |
+            Select-Object -ExpandProperty packages |
+            Select-Object -First 1 |
+            Select-Object -ExpandProperty version
+
+          "FRAMEBOLT_VERSION=$Version" >> $env:GITHUB_ENV
+
+      - name: Package Windows installer
+        shell: pwsh
+        run: |
+          ./scripts/windows/package_windows_installer.ps1
+
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-windows-installer
+          path: dist/*.exe
+          if-no-files-found: error
 
   release:
     name: Create GitHub Release
