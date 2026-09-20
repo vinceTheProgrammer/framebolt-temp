@@ -530,9 +530,16 @@ jobs:
                 pkgconf \
                 python
 
+              useradd --create-home --shell /bin/bash builder
+
+              chown -R builder:builder /workspace
+
               chmod +x scripts/linux/package_aur.sh
 
-              ./scripts/linux/package_aur.sh dist/aur
+              su - builder -c "
+                cd /workspace
+                ./scripts/linux/package_aur.sh dist/aur
+              "
             '
 
       - name: Upload AUR package artifact
