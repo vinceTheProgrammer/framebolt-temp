@@ -508,6 +508,9 @@ jobs:
     needs:
       - release
 
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
