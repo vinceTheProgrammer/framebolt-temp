@@ -558,6 +558,7 @@ jobs:
       - name: Upload AUR files to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           tar -czf "framebolt-aur-v${VERSION}.tar.gz" \
             -C dist/aur \
