@@ -471,12 +471,9 @@ jobs:
           GLIB_ZIP: "http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28/glib_2.28.8-1_win32.zip"
         run: |
           curl -LO "${{ env.PKG_CONFIG_ZIP }}"
-          7z x pkg-config_0.26-1_win32.zip -oC:\MinGW\bin pkg-config.exe
-          curl -LO "${{ env.GETTEXT_RUNTIME_ZIP }}"
-          7z x gettext-runtime_0.18.1.1-2_win32.zip -oC:\MinGW\bin intl.dll
-          curl -LO "${{ env.GLIB_ZIP }}"
-          7z x glib_2.28.8-1_win32.zip -oC:\MinGW\bin libglib-2.0-0.dll
-          echo "C:\MinGW\bin" >> $GITHUB_PATH
+          7z x pkg-config_0.26-1_win32.zip -oC:\pkgconf
+          mv C:\pkgconf\bin\pkg-config.exe C:\custombin\pkg-config.exe
+          echo "C:\custombin" >> $GITHUB_PATH
 
       - name: Build Framebolt
         run: cargo build -p framebolt-desktop --release
