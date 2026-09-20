@@ -532,6 +532,10 @@ jobs:
                 pkgconf \
                 python
 
+              groupadd \
+              --gid "$HOST_GID" \
+              builder
+
               useradd \
                 --uid "$HOST_UID" \
                 --gid "$HOST_GID" \
