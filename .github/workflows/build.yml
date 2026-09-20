@@ -473,14 +473,7 @@ jobs:
       - name: Get version
         id: version
         run: |
-          VERSION="$(
-            cargo metadata \
-              --format-version 1 \
-              --no-deps |
-            python3 -c \
-              'import json, sys; print(json.load(sys.stdin)["packages"][0]["version"])'
-          )
-
+          VERSION=$(cargo metadata --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["packages"][0]["version"])')
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Download all build artifacts
