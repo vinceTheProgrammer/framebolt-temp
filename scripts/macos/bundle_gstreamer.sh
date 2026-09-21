@@ -146,19 +146,17 @@ resolve_dylib_path() {
 
 is_bundled_dependency() {
     local dep="$1"
+    local homebrew_prefix
+
+    homebrew_prefix="$(brew --prefix)"
 
     # Anything installed directly under the GStreamer formula.
     if [[ "$dep" == "$GST_PREFIX/"* ]]; then
         return 0
     fi
 
-    # Homebrew dependencies are normally under the Homebrew prefix.
-    #
-    # We deliberately only bundle dylibs here. System libraries such as:
-    #   /usr/lib/libSystem.B.dylib
-    #   /usr/lib/libobjc.A.dylib
-    # should remain system dependencies.
-    if [[ "$dep" == "$(brew --prefix)"/lib/*.dylib ]]; then
+    # Homebrew libraries under the global Homebrew prefix.
+    if [[ "$dep" == "$homebrew_prefix/"* && "$dep" == *.dylib ]]; then
         return 0
     fi
 
@@ -166,7 +164,7 @@ is_bundled_dependency() {
     local resolved
     resolved="$(resolve_dylib_path "$dep")"
 
-    if [[ "$resolved" == "$(brew --prefix)"/"* ]]; then
+    if [[ "$resolved" == "$homebrew_prefix/"* && "$resolved" == *.dylib ]]; then
         return 0
     fi
 
