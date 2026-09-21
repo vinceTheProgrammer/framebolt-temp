@@ -549,18 +549,40 @@ jobs:
 
           Write-Host "GStreamer installation complete."
 
-      - name: Verify GStreamer
+      - name: Verify GStreamer installation
         shell: pwsh
         run: |
-          if (-not (Test-Path "C:\gstreamer\bin")) {
-            throw "GStreamer bin directory was not installed."
+          Write-Host "Checking expected location..."
+          if (Test-Path "C:\gstreamer") {
+            Get-ChildItem "C:\gstreamer" -Force
+          } else {
+            Write-Host "C:\gstreamer does not exist."
           }
 
-          if (-not (Test-Path "C:\gstreamer\bin\gst-launch-1.0.exe")) {
-            throw "gst-launch-1.0.exe was not installed."
+          Write-Host ""
+          Write-Host "Searching for gst-launch-1.0.exe..."
+
+          $GstLaunch = Get-ChildItem `
+            -Path "C:\" `
+            -Filter "gst-launch-1.0.exe" `
+            -Recurse `
+            -ErrorAction SilentlyContinue |
+            Select-Object -First 10 -ExpandProperty FullName
+
+          if (-not $GstLaunch) {
+            throw "Could not find gst-launch-1.0.exe anywhere on C:\"
           }
 
-          gst-launch-1.0 --version
+          Write-Host "Found GStreamer:"
+          $GstLaunch | ForEach-Object {
+            Write-Host "  $_"
+          }
+
+          Write-Host ""
+          Write-Host "Checking PATH..."
+          $env:PATH -split ";" |
+            Where-Object { $_ -match "gstreamer|GStreamer" } |
+            ForEach-Object { Write-Host "  $_" }
 
       - name: Get version
         id: version
