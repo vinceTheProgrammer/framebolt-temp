@@ -778,24 +778,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
+
       - name: Install GStreamer
-        run: ./scripts/macos/install_gstreamer.sh
+        run: brew install gstreamer
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           target: aarch64-apple-darwin, x86_64-apple-darwin
-
-      - name: Ensure pkg-config is installed
-        run: |
-          if ! command -v pkg-config >/dev/null 2>&1; then
-            brew install pkg-config
-          fi
-
-      - name: Check pkg-config
-        run: pkg-config --version
 
       - name: Build Framebolt aarch64
         run: cargo build -p framebolt-desktop --release --target aarch64-apple-darwin
