@@ -776,6 +776,9 @@ jobs:
     runs-on: macos-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
       - name: Install GStreamer
         run: ./scripts/macos/install_gstreamer.sh
 
