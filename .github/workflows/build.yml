@@ -771,6 +771,38 @@ jobs:
           path: dist/*.exe
           if-no-files-found: error
 
+  build-macos:
+    name: Build & Package MacOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Install GStreamer
+        run: ./scripts/macos/install_gstreamer.sh
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          target: aarch64-apple-darwin, x86_64-apple-darwin
+
+      - name: Build Framebolt aarch64
+        run: cargo build -p framebolt-desktop --release --target aarch64-apple-darwin
+
+      - name: Bundle GStreamer into package
+        run: ./scripts/macos/bundle_gstreamer.sh
+
+      - name: Move .app to dist for workflow consistency
+        run: |
+          mkdir -p dist
+          mv target/release/framebolt-desktop.app dist/framebolt.app
+
+      - name: Upload MacOS .app artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-macos
+          path: dist/*.app
+          if-no-files-found: error
+
   release:
     name: Create GitHub Release
     runs-on: ubuntu-22.04
