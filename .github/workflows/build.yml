@@ -468,7 +468,7 @@ jobs:
         shell: pwsh
         run: |
           $GStreamerVersion = "1.26.7"
-          $GStreamerRoot = "C:\gstreamer"
+          $GStreamerRoot = "C:\gstreamer\1.0\msvc_x86_64"
 
           $BaseUrl = "https://gstreamer.freedesktop.org/data/pkg/windows/$GStreamerVersion/msvc"
 
@@ -534,18 +534,15 @@ jobs:
 
           Write-Host "GStreamer runtime package installed successfully."
 
-          if (-not (Test-Path $GStreamerRoot)) {
-            throw "GStreamer installation directory was not created: $GStreamerRoot"
-          }
+          if (-not (Test-Path "$GStreamerRoot\bin")) { 
+            throw "GStreamer bin directory was not found: $GStreamerRoot\bin" 
+          } 
+          
+          Write-Host "GStreamer installed at:" 
+          Write-Host " $GStreamerRoot"
 
-          Write-Host "GStreamer installed at:"
-          Write-Host "  $GStreamerRoot"
-
-          Write-Host "Adding GStreamer to PATH..."
-
-          "$GStreamerRoot\bin" | Out-File `
-            -FilePath $env:GITHUB_PATH `
-            -Encoding utf8
+          Write-Host "Adding GStreamer to PATH..." 
+          "$GStreamerRoot\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
 
           Write-Host "GStreamer installation complete."
 
