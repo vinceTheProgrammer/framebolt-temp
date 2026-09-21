@@ -799,26 +799,27 @@ jobs:
           VERSION=$(cargo metadata --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["packages"][0]["version"])')
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
-      - name: Download all build artifacts
+      - name: Download release artifacts
         uses: actions/download-artifact@v8
         with:
-          path: release-artifacts
-          pattern: |
-            framebolt-deb*
-            framebolt-rpm*
-            framebolt-flatpak*
-            framebolt-appimage*
-            framebolt-snap*
-            framebolt-x86_64*
-            framebolt-windows-portable*
-            framebolt-windows-installer*
-          merge-multiple: true
+           path: release-artifacts
+           pattern: '*'
+           merge-multiple: true
 
-      - name: List release artifacts
+      - name: Remove intermediate Windows files
+        shell: bash
         run: |
-          find release-artifacts \
-            -maxdepth 4 \
-            -print
+          # Remove Windows runtime DLLs accidentally included in the release artifacts
+          find release-artifacts -maxdepth 1 -type f -name '*.dll' -delete
+
+          # Remove the GStreamer plugin directory
+          rm -rf release-artifacts/lib
+
+          # Remove the standalone Windows executable
+          rm -f release-artifacts/framebolt.exe
+
+          echo "Remaining release artifacts:"
+          find release-artifacts -type f -print
 
       - name: Create GitHub Release
         env:
