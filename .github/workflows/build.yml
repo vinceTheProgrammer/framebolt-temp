@@ -817,6 +817,7 @@ jobs:
       - build-arch
       - build-windows-portable
       - build-windows-installer
+      - build-macos
 
     permissions:
       contents: write
