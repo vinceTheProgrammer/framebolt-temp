@@ -789,12 +789,27 @@ jobs:
           target: aarch64-apple-darwin, x86_64-apple-darwin
 
       - name: Build Framebolt aarch64
-        run: cargo build -p framebolt-desktop --release --target aarch64-apple-darwin
+        run: |
+          cargo build \
+            -p framebolt-desktop \
+            --release \
+            --target aarch64-apple-darwin
 
-      - name: Bundle GStreamer into package
+      - name: Create macOS app bundle
+        run: |
+          APP="target/release/framebolt-desktop.app"
+
+          mkdir -p "$APP/Contents/MacOS"
+          mkdir -p "$APP/Contents/Resources"
+
+          cp \
+            "target/aarch64-apple-darwin/release/framebolt-desktop" \
+            "$APP/Contents/MacOS/framebolt-desktop"
+
+      - name: Bundle GStreamer
         run: ./scripts/macos/bundle_gstreamer.sh
 
-      - name: Move .app to dist for workflow consistency
+      - name: Move .app to dist
         run: |
           mkdir -p dist
           mv target/release/framebolt-desktop.app dist/framebolt.app
