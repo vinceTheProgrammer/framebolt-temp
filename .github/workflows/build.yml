@@ -618,6 +618,8 @@ jobs:
       - name: Prepare Windows staging directory
         shell: pwsh
         run: |
+          $GStreamerRoot = "C:\gstreamer\1.0\msvc_x86_64"
+
           $ErrorActionPreference = "Stop"
 
           $Stage = "dist/windows-staging"
@@ -640,7 +642,7 @@ jobs:
           Write-Host "Copying GStreamer runtime DLLs..."
 
           Copy-Item `
-            "$env:GSTREAMER_ROOT\bin\*.dll" `
+            "$GStreamerRoot\bin\*.dll" `
             "$Stage" `
             -Force
 
@@ -650,7 +652,7 @@ jobs:
             "$Stage/lib/gstreamer-1.0" | Out-Null
 
           Copy-Item `
-            "$env:GSTREAMER_ROOT/lib/gstreamer-1.0/*.dll" `
+            "$GStreamerRoot/lib/gstreamer-1.0/*.dll" `
             "$Stage/lib/gstreamer-1.0" `
             -Force
 
