@@ -552,26 +552,15 @@ jobs:
       - name: Verify GStreamer
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
-
-          Write-Host "GSTREAMER_ROOT=$env:GSTREAMER_ROOT"
-
-          if (-not (Test-Path "$env:GSTREAMER_ROOT\bin")) {
-            throw "GStreamer bin directory does not exist."
+          if (-not (Test-Path "C:\gstreamer\bin")) {
+            throw "GStreamer bin directory was not installed."
           }
 
-          Get-ChildItem "$env:GSTREAMER_ROOT\bin" |
-            Select-Object Name, Length
-
-          $GstPluginPath = "$env:GSTREAMER_ROOT\lib\gstreamer-1.0"
-
-          if (-not (Test-Path $GstPluginPath)) {
-            throw "GStreamer plugin directory does not exist: $GstPluginPath"
+          if (-not (Test-Path "C:\gstreamer\bin\gst-launch-1.0.exe")) {
+            throw "gst-launch-1.0.exe was not installed."
           }
 
-          Write-Host "GStreamer plugins:"
-          Get-ChildItem $GstPluginPath |
-            Select-Object Name, Length
+          gst-launch-1.0 --version
 
       - name: Get version
         id: version
@@ -763,7 +752,8 @@ jobs:
       - build-appimage
       - build-snap
       - build-arch
-      - build-windows
+      - build-windows-portable
+      - build-windows-installer
 
     permissions:
       contents: write
