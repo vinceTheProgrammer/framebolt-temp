@@ -803,7 +803,15 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           path: release-artifacts
-          pattern: '*'
+          pattern: |
+            framebolt-deb
+            framebolt-rpm
+            framebolt-flatpak
+            framebolt-appimage
+            framebolt-snap
+            framebolt-x86_64
+            framebolt-windows-portable
+            framebolt-windows-installer
           merge-multiple: true
 
       - name: List release artifacts
