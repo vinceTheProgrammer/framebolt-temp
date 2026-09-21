@@ -546,40 +546,49 @@ jobs:
 
           Write-Host "GStreamer installation complete."
 
-      - name: Verify GStreamer installation
+      - name: Verify GStreamer
         shell: pwsh
         run: |
-          Write-Host "Checking expected location..."
-          if (Test-Path "C:\gstreamer") {
-            Get-ChildItem "C:\gstreamer" -Force
-          } else {
-            Write-Host "C:\gstreamer does not exist."
+          $GStreamerRoot = "C:\gstreamer\1.0\msvc_x86_64"
+
+          Write-Host "Checking GStreamer installation..."
+          
+          if (-not (Test-Path $GStreamerRoot)) {
+            throw "GStreamer installation directory was not found: $GStreamerRoot"
+          }
+
+          if (-not (Test-Path "$GStreamerRoot\bin")) {
+            throw "GStreamer bin directory was not found: $GStreamerRoot\bin"
+          }
+
+          if (-not (Test-Path "$GStreamerRoot\lib\gstreamer-1.0")) {
+            throw "GStreamer plugin directory was not found: $GStreamerRoot\lib\gstreamer-1.0"
+          }
+
+          Write-Host "GStreamer installation found at:"
+          Write-Host "  $GStreamerRoot"
+
+          Write-Host ""
+          Write-Host "GStreamer version:"
+          & "$GStreamerRoot\bin\gst-launch-1.0.exe" --version
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "gst-launch-1.0 failed with exit code $LASTEXITCODE"
           }
 
           Write-Host ""
-          Write-Host "Searching for gst-launch-1.0.exe..."
+          Write-Host "Checking GStreamer plugins..."
 
-          $GstLaunch = Get-ChildItem `
-            -Path "C:\" `
-            -Filter "gst-launch-1.0.exe" `
-            -Recurse `
-            -ErrorAction SilentlyContinue |
-            Select-Object -First 10 -ExpandProperty FullName
+          $PluginCount = @(Get-ChildItem "$GStreamerRoot\lib\gstreamer-1.0" -Filter "*.dll").Count
 
-          if (-not $GstLaunch) {
-            throw "Could not find gst-launch-1.0.exe anywhere on C:\"
+          if ($PluginCount -eq 0) {
+            throw "No GStreamer plugins were found."
           }
 
-          Write-Host "Found GStreamer:"
-          $GstLaunch | ForEach-Object {
-            Write-Host "  $_"
-          }
+          Write-Host "Found $PluginCount GStreamer plugin DLL(s)."
 
           Write-Host ""
-          Write-Host "Checking PATH..."
-          $env:PATH -split ";" |
-            Where-Object { $_ -match "gstreamer|GStreamer" } |
-            ForEach-Object { Write-Host "  $_" }
+          Write-Host "GStreamer verification successful."
 
       - name: Get version
         id: version
