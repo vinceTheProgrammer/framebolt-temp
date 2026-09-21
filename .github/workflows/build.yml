@@ -467,99 +467,87 @@ jobs:
       - name: Install GStreamer
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
+          $GStreamerVersion = "1.26.7"
+          $GStreamerRoot = "C:\gstreamer"
 
-          $GStreamerVersion = "1.24.13"
-          $GStreamerRoot = "$env:RUNNER_TEMP\gstreamer"
+          $BaseUrl = "https://gstreamer.freedesktop.org/data/pkg/windows/$GStreamerVersion/msvc"
 
-          $RuntimeUrl = "https://gstreamer.freedesktop.org/data/pkg/windows/$GStreamerVersion/msvc/gstreamer-1.0-msvc-x86_64-$GStreamerVersion.zip"
-          $DevelUrl = "https://gstreamer.freedesktop.org/data/pkg/windows/$GStreamerVersion/msvc/gstreamer-1.0-devel-msvc-x86_64-$GStreamerVersion.zip"
+          $DevelUrl = "$BaseUrl/gstreamer-1.0-devel-msvc-x86_64-$GStreamerVersion.msi"
+          $RuntimeUrl = "$BaseUrl/gstreamer-1.0-msvc-x86_64-$GStreamerVersion.msi"
 
-          $RuntimeZip = "$env:RUNNER_TEMP\gstreamer-runtime.zip"
-          $DevelZip = "$env:RUNNER_TEMP\gstreamer-devel.zip"
-
-          Remove-Item `
-            -Recurse `
-            -Force `
-            -ErrorAction SilentlyContinue `
-            $GStreamerRoot
-
-          Write-Host "Downloading GStreamer runtime..."
-          Invoke-WebRequest `
-            -Uri $RuntimeUrl `
-            -OutFile $RuntimeZip
+          $DevelMsi = Join-Path $env:RUNNER_TEMP "gstreamer-devel.msi"
+          $RuntimeMsi = Join-Path $env:RUNNER_TEMP "gstreamer-runtime.msi"
 
           Write-Host "Downloading GStreamer development package..."
           Invoke-WebRequest `
             -Uri $DevelUrl `
-            -OutFile $DevelZip
+            -OutFile $DevelMsi
 
-          if (-not (Test-Path $RuntimeZip)) {
-            throw "GStreamer runtime archive was not downloaded."
+          Write-Host "Installing GStreamer development package..."
+
+          $Process = Start-Process `
+            -FilePath "msiexec.exe" `
+            -ArgumentList @(
+              "/i"
+              "`"$DevelMsi`""
+              "/qn"
+              "INSTALLDIR=$GStreamerRoot"
+              "/L*v"
+              "`"$env:RUNNER_TEMP\gstreamer-devel.log`""
+            ) `
+            -Wait `
+            -PassThru
+
+          if ($Process.ExitCode -ne 0) {
+            Write-Host "GStreamer development installation failed with exit code $($Process.ExitCode)"
+            Get-Content "$env:RUNNER_TEMP\gstreamer-devel.log" -Tail 50
+            exit 1
           }
 
-          if (-not (Test-Path $DevelZip)) {
-            throw "GStreamer development archive was not downloaded."
+          Write-Host "GStreamer development package installed successfully."
+
+          Write-Host "Downloading GStreamer runtime package..."
+          Invoke-WebRequest `
+            -Uri $RuntimeUrl `
+            -OutFile $RuntimeMsi
+
+          Write-Host "Installing GStreamer runtime package..."
+
+          $Process = Start-Process `
+            -FilePath "msiexec.exe" `
+            -ArgumentList @(
+              "/i"
+              "`"$RuntimeMsi`""
+              "/qn"
+              "INSTALLDIR=$GStreamerRoot"
+              "/L*v"
+              "`"$env:RUNNER_TEMP\gstreamer-runtime.log`""
+            ) `
+            -Wait `
+            -PassThru
+
+          if ($Process.ExitCode -ne 0) {
+            Write-Host "GStreamer runtime installation failed with exit code $($Process.ExitCode)"
+            Get-Content "$env:RUNNER_TEMP\gstreamer-runtime.log" -Tail 50
+            exit 1
           }
 
-          Write-Host "Runtime archive:"
-          Get-Item $RuntimeZip | Format-List FullName,Length
+          Write-Host "GStreamer runtime package installed successfully."
 
-          Write-Host "Development archive:"
-          Get-Item $DevelZip | Format-List FullName,Length
-
-          New-Item `
-            -ItemType Directory `
-            -Force `
-            $GStreamerRoot | Out-Null
-
-          Write-Host "Extracting GStreamer runtime..."
-          Expand-Archive `
-            -Path $RuntimeZip `
-            -DestinationPath $GStreamerRoot `
-            -Force
-
-          Write-Host "Extracting GStreamer development package..."
-          Expand-Archive `
-            -Path $DevelZip `
-            -DestinationPath $GStreamerRoot `
-            -Force
-
-          Write-Host "GStreamer directory:"
-          Get-ChildItem `
-            $GStreamerRoot `
-            -Recurse |
-            Select-Object FullName
-
-          $GStreamerDir = Get-ChildItem `
-            $GStreamerRoot `
-            -Directory |
-            Select-Object -First 1
-
-          if ($null -eq $GStreamerDir) {
-            throw "Could not find extracted GStreamer directory."
+          if (-not (Test-Path $GStreamerRoot)) {
+            throw "GStreamer installation directory was not created: $GStreamerRoot"
           }
 
-          $GStreamerPath = $GStreamerDir.FullName
+          Write-Host "GStreamer installed at:"
+          Write-Host "  $GStreamerRoot"
 
-          Write-Host "Detected GStreamer installation:"
-          Write-Host "  $GStreamerPath"
+          Write-Host "Adding GStreamer to PATH..."
 
-          if (-not (Test-Path "$GStreamerPath\bin")) {
-            throw "GStreamer bin directory not found."
-          }
+          "$GStreamerRoot\bin" | Out-File `
+            -FilePath $env:GITHUB_PATH `
+            -Encoding utf8
 
-          if (-not (Test-Path "$GStreamerPath\lib\pkgconfig")) {
-            throw "GStreamer pkg-config directory not found."
-          }
-
-            "$GStreamerPath\bin" | Out-File `
-              -FilePath $env:GITHUB_PATH `
-              -Encoding utf8
-
-          "GSTREAMER_ROOT=$GStreamerPath" >> $env:GITHUB_ENV
-
-          Write-Host "GStreamer installation verified."
+          Write-Host "GStreamer installation complete."
 
       - name: Verify GStreamer
         shell: pwsh
