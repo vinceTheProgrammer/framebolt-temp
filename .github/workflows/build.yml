@@ -468,6 +468,7 @@ jobs:
         shell: pwsh
         run: |
           $GStreamerVersion = "1.26.7"
+          $GStreamerInstallDir = "C:\gstreamer"
           $GStreamerRoot = "C:\gstreamer\1.0\msvc_x86_64"
 
           $BaseUrl = "https://gstreamer.freedesktop.org/data/pkg/windows/$GStreamerVersion/msvc"
@@ -491,7 +492,7 @@ jobs:
               "/i"
               "`"$DevelMsi`""
               "/qn"
-              "INSTALLDIR=$GStreamerRoot"
+              "INSTALLDIR=$GStreamerInstallDir"
               "/L*v"
               "`"$env:RUNNER_TEMP\gstreamer-devel.log`""
             ) `
@@ -519,7 +520,7 @@ jobs:
               "/i"
               "`"$RuntimeMsi`""
               "/qn"
-              "INSTALLDIR=$GStreamerRoot"
+              "INSTALLDIR=$GStreamerInstallDir"
               "/L*v"
               "`"$env:RUNNER_TEMP\gstreamer-runtime.log`""
             ) `
