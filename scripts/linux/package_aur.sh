@@ -70,42 +70,70 @@ fi
 echo "    main: ${MAIN_SHA}"
 
 ###############################################################################
-# Find the native x86_64 Linux binary.
+# Find native Linux release binaries.
 #
-# The Arch CI build/release should publish:
+# The release should publish:
 #
 #   framebolt-x86_64
+#   framebolt-arm64
 #
-# We intentionally do NOT use the AppImage here. framebolt-bin is supposed
-# to be the native Arch/Linux binary package.
+# Arch Linux uses:
+#
+#   x86_64
+#   aarch64
+#
+# for these two architectures respectively.
 ###############################################################################
 
-echo "==> Finding native x86_64 Linux release binary..."
+echo "==> Finding native Linux release binaries..."
 
-BINARY_NAME="framebolt-x86_64"
+X86_64_BINARY_NAME="framebolt-x86_64"
+AARCH64_BINARY_NAME="framebolt-arm64"
 
-BINARY_URL="$(
+X86_64_BINARY_URL="$(
     jq -r \
-        --arg name "$BINARY_NAME" \
+        --arg name "$X86_64_BINARY_NAME" \
         '.assets[]
          | select(.name == $name)
          | .browser_download_url' \
         <<<"$RELEASE_JSON"
 )"
 
-if [[ -z "$BINARY_URL" || "$BINARY_URL" == "null" ]]; then
-    echo "error: release does not contain ${BINARY_NAME}" >&2
+if [[ -z "$X86_64_BINARY_URL" || "$X86_64_BINARY_URL" == "null" ]]; then
+    echo "error: release does not contain ${X86_64_BINARY_NAME}" >&2
     echo >&2
     echo "Available release assets:" >&2
     jq -r '.assets[].name' <<<"$RELEASE_JSON" >&2
     exit 1
 fi
 
-echo "    binary: ${BINARY_NAME}"
-echo "    url:    ${BINARY_URL}"
+AARCH64_BINARY_URL="$(
+    jq -r \
+        --arg name "$AARCH64_BINARY_NAME" \
+        '.assets[]
+         | select(.name == $name)
+         | .browser_download_url' \
+        <<<"$RELEASE_JSON"
+)"
+
+if [[ -z "$AARCH64_BINARY_URL" || "$AARCH64_BINARY_URL" == "null" ]]; then
+    echo "error: release does not contain ${AARCH64_BINARY_NAME}" >&2
+    echo >&2
+    echo "Available release assets:" >&2
+    jq -r '.assets[].name' <<<"$RELEASE_JSON" >&2
+    exit 1
+fi
+
+echo "    x86_64:"
+echo "      binary: ${X86_64_BINARY_NAME}"
+echo "      url:    ${X86_64_BINARY_URL}"
+
+echo "    aarch64:"
+echo "      binary: ${AARCH64_BINARY_NAME}"
+echo "      url:    ${AARCH64_BINARY_URL}"
 
 ###############################################################################
-# Download the release binary so we can generate a real SHA256 checksum.
+# Download release binaries so we can generate real SHA256 checksums.
 ###############################################################################
 
 TMP_DIR="$(mktemp -d)"
@@ -116,20 +144,35 @@ cleanup() {
 
 trap cleanup EXIT
 
-echo "==> Downloading ${BINARY_NAME} for checksum..."
+echo "==> Downloading ${X86_64_BINARY_NAME} for checksum..."
 
 curl -fL \
     --retry 3 \
     --retry-delay 2 \
-    -o "${TMP_DIR}/${BINARY_NAME}" \
-    "$BINARY_URL"
+    -o "${TMP_DIR}/${X86_64_BINARY_NAME}" \
+    "$X86_64_BINARY_URL"
 
-BINARY_SHA256="$(
-    sha256sum "${TMP_DIR}/${BINARY_NAME}" |
+X86_64_BINARY_SHA256="$(
+    sha256sum "${TMP_DIR}/${X86_64_BINARY_NAME}" |
         awk '{print $1}'
 )"
 
-echo "    sha256: ${BINARY_SHA256}"
+echo "    sha256: ${X86_64_BINARY_SHA256}"
+
+echo "==> Downloading ${AARCH64_BINARY_NAME} for checksum..."
+
+curl -fL \
+    --retry 3 \
+    --retry-delay 2 \
+    -o "${TMP_DIR}/${AARCH64_BINARY_NAME}" \
+    "$AARCH64_BINARY_URL"
+
+AARCH64_BINARY_SHA256="$(
+    sha256sum "${TMP_DIR}/${AARCH64_BINARY_NAME}" |
+        awk '{print $1}'
+)"
+
+echo "    sha256: ${AARCH64_BINARY_SHA256}"
 
 ###############################################################################
 # Helpers
@@ -196,7 +239,7 @@ pkgname=framebolt
 pkgver=${RELEASE_VERSION}
 pkgrel=1
 pkgdesc='Framebolt'
-arch=('x86_64')
+arch=('x86_64' 'aarch64')
 url='https://github.com/${REPO}'
 
 # TODO: replace with the actual SPDX license used by the project.
@@ -270,7 +313,10 @@ EOF
 ###############################################################################
 # framebolt-bin
 #
-# Native prebuilt x86_64 Linux release binary.
+# Native prebuilt Linux release binaries.
+#
+# x86_64  -> framebolt-x86_64
+# aarch64 -> framebolt-arm64
 ###############################################################################
 
 FRAMEBOLT_BIN_DIR="${OUT_DIR}/framebolt-bin"
@@ -285,7 +331,7 @@ pkgname=framebolt-bin
 pkgver=${RELEASE_VERSION}
 pkgrel=1
 pkgdesc='Framebolt (prebuilt binary)'
-arch=('x86_64')
+arch=('x86_64' 'aarch64')
 url='https://github.com/${REPO}'
 
 # TODO: replace with the actual SPDX license used by the project.
@@ -299,21 +345,50 @@ depends=(
 provides=('framebolt')
 conflicts=('framebolt' 'framebolt-git')
 
+source_x86_64=(
+    '${X86_64_BINARY_NAME}::${X86_64_BINARY_URL}'
+)
+
+source_aarch64=(
+    '${AARCH64_BINARY_NAME}::${AARCH64_BINARY_URL}'
+)
+
 source=(
-    '${BINARY_NAME}::${BINARY_URL}'
     'framebolt.desktop'
     'framebolt.png'
 )
 
+sha256sums_x86_64=(
+    '${X86_64_BINARY_SHA256}'
+)
+
+sha256sums_aarch64=(
+    '${AARCH64_BINARY_SHA256}'
+)
+
 sha256sums=(
-    '${BINARY_SHA256}'
     'SKIP'
     'SKIP'
 )
 
 package() {
+    local binary_name
+
+    case "\${CARCH}" in
+        x86_64)
+            binary_name='${X86_64_BINARY_NAME}'
+            ;;
+        aarch64)
+            binary_name='${AARCH64_BINARY_NAME}'
+            ;;
+        *)
+            echo "error: unsupported architecture: \${CARCH}" >&2
+            return 1
+            ;;
+    esac
+
     install -Dm755 \
-        "\${srcdir}/${BINARY_NAME}" \
+        "\${srcdir}/\${binary_name}" \
         "\${pkgdir}/usr/bin/framebolt"
 
     install -Dm644 \
@@ -344,7 +419,7 @@ pkgname=framebolt-git
 pkgver=r1.g${MAIN_SHA:0:7}
 pkgrel=1
 pkgdesc='Framebolt (latest main branch)'
-arch=('x86_64')
+arch=('x86_64' 'aarch64')
 url='https://github.com/${REPO}'
 
 # TODO: replace with the actual SPDX license used by the project.
@@ -438,8 +513,12 @@ find "$OUT_DIR" \
     sort
 
 echo
-echo "Release: ${RELEASE_TAG}"
-echo "Version: ${RELEASE_VERSION}"
-echo "Main:    ${MAIN_SHA}"
-echo "Binary:  ${BINARY_NAME}"
-echo "SHA256:  ${BINARY_SHA256}"
+echo "Release:       ${RELEASE_TAG}"
+echo "Version:       ${RELEASE_VERSION}"
+echo "Main:          ${MAIN_SHA}"
+echo
+echo "x86_64 binary: ${X86_64_BINARY_NAME}"
+echo "x86_64 SHA256: ${X86_64_BINARY_SHA256}"
+echo
+echo "aarch64 binary: ${AARCH64_BINARY_NAME}"
+echo "aarch64 SHA256: ${AARCH64_BINARY_SHA256}"

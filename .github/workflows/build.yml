@@ -394,7 +394,7 @@ jobs:
           path: dist/*.snap
           if-no-files-found: error
   
-  build-arch:
+  build-arch-x64:
     name: Build & Package Arch
     runs-on: ubuntu-22.04
 
@@ -448,6 +448,62 @@ jobs:
         with:
           name: framebolt-x86_64
           path: dist/framebolt-x86_64
+          if-no-files-found: error
+
+  build-arch-arm64:
+    name: Build & Package Arch
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Arch binary
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            archlinux:latest \
+            bash -c '
+              set -e
+
+              pacman -Syu --noconfirm
+
+              pacman -S --noconfirm \
+                base-devel \
+                curl \
+                pkgconf \
+                python \
+                gstreamer \
+                gst-plugins-base \
+                glib2
+
+              curl --proto "=https" --tlsv1.2 -sSf \
+                https://sh.rustup.rs | sh -s -- -y
+
+              source "$HOME/.cargo/env"
+
+              cargo build \
+                -p framebolt-desktop \
+                --release
+
+              mkdir -p dist
+
+              install -Dm755 \
+                target/release/framebolt-desktop \
+                dist/framebolt-arm64
+            '
+
+      - name: Verify Arch binary
+        run: |
+          file dist/framebolt-arm64
+          readelf -d dist/framebolt-arm64 | grep NEEDED
+
+      - name: Upload Arch binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-arm64
+          path: dist/framebolt-arm64
           if-no-files-found: error
 
   build-windows:
@@ -893,7 +949,7 @@ jobs:
               cd release-artifacts
               ditto -c -k --sequesterRsrc --keepParent \
                 framebolt.app \
-                framebolt-macos-intel-x86.zip
+                framebolt-macos-intel-x64.zip
             )
 
             rm -rf release-artifacts/framebolt.app
@@ -920,7 +976,8 @@ jobs:
       - build-flatpak
       - build-appimage
       - build-snap
-      - build-arch
+      - build-arch-x64
+      - build-arch-arm64
       - build-windows-portable
       - build-windows-installer
       - build-macos-arm
