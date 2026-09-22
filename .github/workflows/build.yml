@@ -912,7 +912,7 @@ jobs:
       - name: Verify GStreamer
         shell: pwsh
         run: |
-          $GStreamerRoot = $env:GSTREAMER_ROOT
+          $GStreamerRoot = "C:\gstreamer"
           ./scripts/windows/verify_gstreamer.ps1
 
       - name: Get version
@@ -941,6 +941,7 @@ jobs:
       - name: Prepare Windows staging directory
         shell: pwsh
         run: |
+          $GStreamerRoot = "C:\gstreamer"
           $ErrorActionPreference = "Stop"
           $Stage = "dist/windows-staging"
 
@@ -962,7 +963,7 @@ jobs:
           Write-Host "Copying GStreamer runtime DLLs..."
 
           Copy-Item `
-            "$env:GSTREAMER_ROOT\bin\*.dll" `
+            "$GStreamerRoot_ROOT\bin\*.dll" `
             "$Stage" `
             -Force
 
@@ -972,7 +973,7 @@ jobs:
             "$Stage/lib/gstreamer-1.0" | Out-Null
 
           Copy-Item `
-            "$env:GSTREAMER_ROOT/lib/gstreamer-1.0/*.dll" `
+            "$GStreamerRoot_ROOT/lib/gstreamer-1.0/*.dll" `
             "$Stage/lib/gstreamer-1.0" `
             -Force
 
@@ -1024,7 +1025,7 @@ jobs:
       - name: Verify GStreamer
         shell: pwsh
         run: |
-          $GStreamerRoot = $env:GSTREAMER_ROOT
+          $GStreamerRoot = "C:\gstreamer"
           ./scripts/windows/verify_gstreamer.ps1
 
       - name: Get version
@@ -1053,6 +1054,7 @@ jobs:
       - name: Prepare Windows staging directory
         shell: pwsh
         run: |
+          $GStreamerRoot = "C:\gstreamer"
           $ErrorActionPreference = "Stop"
           $Stage = "dist/windows-staging"
 
@@ -1074,7 +1076,7 @@ jobs:
           Write-Host "Copying GStreamer runtime DLLs..."
 
           Copy-Item `
-            "$env:GSTREAMER_ROOT\bin\*.dll" `
+            "$GStreamerRoot_ROOT\bin\*.dll" `
             "$Stage" `
             -Force
 
@@ -1084,7 +1086,7 @@ jobs:
             "$Stage/lib/gstreamer-1.0" | Out-Null
 
           Copy-Item `
-            "$env:GSTREAMER_ROOT/lib/gstreamer-1.0/*.dll" `
+            "$GStreamerRoot_ROOT/lib/gstreamer-1.0/*.dll" `
             "$Stage/lib/gstreamer-1.0" `
             -Force
 
@@ -1535,6 +1537,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            libgstreamer1.0-dev \
+            libglib2.0-dev \
+            libunwind-dev
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -1692,6 +1704,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            libgstreamer1.0-dev \
+            libglib2.0-dev \
+            libunwind-dev
 
       - name: Set up Java
         uses: actions/setup-java@v4

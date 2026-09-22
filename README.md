@@ -69,22 +69,23 @@ cargo build -p framebolt-mobile
 
 ## Android
 ### Prerequisites
-1. Ensure Java is installed and on your `PATH` (not sure what minimum version tbh)
-2. Ensure Android SDK is installed and `ANDROID_HOME` environment variable points to its root
-3. Ensure the following Android SDK components are installed to your Android SDK root:
+1. Ensure gstreamer is installed and on youor `PATH`
+2. Ensure Java is installed and on your `PATH` (not sure what minimum version tbh)
+3. Ensure Android SDK is installed and `ANDROID_HOME` environment variable points to its root
+4. Ensure the following Android SDK components are installed to your Android SDK root:
 - Latest `platform-tools`
 - Latest `build-tools`
 - `platforms;android-34`
 - `ndk;25.2.9519653` and set `NDK_HOME` to point to it (usually a subfolder of the Android SDK root)
-4. Install cargo-apk2 globally (handles building the app for Android)
+5. Install cargo-apk2 globally (handles building the app for Android)
 ```
 cargo install cargo-apk2
 ```
-5. Download the prebuilt Android compatible gstreamer libs
+6. Download the prebuilt Android compatible gstreamer libs
 ```
 ./scripts/android/download_gstreamer.sh
 ```
-6. Stage the gstreamer libs to the correct file structure for the build
+7. Stage the gstreamer libs to the correct file structure for the build
 ```
 ./scripts/android/stage_gstreamer.sh
 ```
