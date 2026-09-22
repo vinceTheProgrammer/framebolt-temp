@@ -5,9 +5,9 @@ fn main() {
 
     if target.contains("android") {
         let abi = if target.contains("aarch64") {
-            "arm64-v8a"
+            "arm64"
         } else if target.contains("armv7") {
-            "armeabi-v7a"
+            "armv7"
         } else if target.contains("x86_64") {
             "x86_64"
         } else {

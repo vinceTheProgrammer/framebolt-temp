@@ -23,11 +23,11 @@ echo "✅ GStreamer runtime staged"
 # ---- Headers ----
 cd ../gstreamer-android
 
-mv armv7 armeabi-v7a || true
-mv arm64 arm64-v8a || true
+# mv armv7 armeabi-v7a || true
+# mv arm64 arm64-v8a || true
 
 HEADERS_DST="../apps/mobile/android/gstreamer"
-HEADERS_SRC="./arm64-v8a"
+HEADERS_SRC="./arm64"
 
 echo "Copying include headers..."
 mkdir -p "$HEADERS_DST/include"
