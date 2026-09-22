@@ -89,7 +89,7 @@ $GStreamerDll = Get-ChildItem `
 
 if (-not $GStreamerDll) {
     Write-Host ""
-    Write-Host "Contents of $GStreamerInstallDir:"
+    Write-Host "Contents of ${GStreamerInstallDir}:"
     
     if (Test-Path $GStreamerInstallDir) {
         Get-ChildItem `

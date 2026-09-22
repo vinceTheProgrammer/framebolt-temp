@@ -89,6 +89,21 @@ cargo install cargo-apk2
 ./scripts/android/stage_gstreamer.sh
 ```
 
+### Build (debug)
+Specify what architectures the apk will support by setting `package.metadata.android.build_targets` in `apps/mobile/Cargo.toml` accordingly. Every included target will be included in the built apk.
+```
+# Specifies the array of targets to build for.
+build_targets = [ 
+    # "armv7-linux-androideabi", 
+    "aarch64-linux-android", 
+    # "i686-linux-android", 
+    # "x86_64-linux-android" 
+]
+```
+```
+./scripts/android/build_debug.sh
+```
+
 ### Run (debug)
 1. Connect Android device via adb
 2. 
@@ -96,10 +111,6 @@ cargo install cargo-apk2
 ./scripts/android/run.sh
 ```
 
-### Build (debug)
-```
-./scripts/android/build_debug.sh
-```
 ### Build (release)
 ```
 ./scripts/android/build.sh
