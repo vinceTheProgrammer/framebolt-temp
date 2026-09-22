@@ -1053,7 +1053,8 @@ jobs:
       - build-deb
       - build-rpm-fedora
       - build-rpm-opensuse
-      - build-flatpak
+      - build-flatpak-x64
+      - build-flatpak-arm64
       - build-appimage
       - build-snap-x64
       - build-snap-arm64
