@@ -3,7 +3,7 @@ set -euo pipefail
 
 VERSION="$(cargo metadata --format-version 1 --no-deps | python3 -c 'import json, sys; print(json.load(sys.stdin)["packages"][0]["version"])')"
 PACKAGE_NAME="framebolt" 
-ARCH="amd64"
+ARCH="$(uname -m)"
 
 echo "Packaging ${PACKAGE_NAME} ${VERSION}..."
 
