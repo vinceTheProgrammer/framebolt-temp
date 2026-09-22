@@ -90,7 +90,7 @@ $GStreamerDll = Get-ChildItem `
 if (-not $GStreamerDll) {
     Write-Host ""
     Write-Host "Contents of ${GStreamerInstallDir}:"
-    
+
     if (Test-Path $GStreamerInstallDir) {
         Get-ChildItem `
             -Path $GStreamerInstallDir `
@@ -101,7 +101,7 @@ if (-not $GStreamerDll) {
                 Write-Host "  $($_.FullName)"
             }
     }
-    
+
     throw "Could not locate gstreamer-1.0-0.dll under $GStreamerInstallDir"
 }
 
@@ -124,15 +124,6 @@ Write-Host ""
 Write-Host "GStreamer lib:"
 Write-Host "  $GStreamerLib"
 
-"GSTREAMER_ROOT=$GStreamerRoot" |
-    Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
-
-"GSTREAMER_BIN=$GStreamerBin" |
-    Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
-
-"GSTREAMER_LIB=$GStreamerLib" |
-    Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
-
 if (-not (Test-Path $GStreamerBin)) {
     throw "GStreamer bin directory was not found: $GStreamerBin"
 }
@@ -147,6 +138,21 @@ Write-Host "Adding GStreamer to PATH..."
 $GStreamerBin |
     Out-File `
         -FilePath $env:GITHUB_PATH `
+        -Encoding utf8
+
+"GSTREAMER_ROOT=$GStreamerRoot" |
+    Out-File `
+        -FilePath $env:GITHUB_ENV `
+        -Encoding utf8
+
+"GSTREAMER_BIN=$GStreamerBin" |
+    Out-File `
+        -FilePath $env:GITHUB_ENV `
+        -Encoding utf8
+
+"GSTREAMER_LIB=$GStreamerLib" |
+    Out-File `
+        -FilePath $env:GITHUB_ENV `
         -Encoding utf8
 
 Write-Host ""
