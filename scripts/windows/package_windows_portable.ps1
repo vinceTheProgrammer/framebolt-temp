@@ -1,4 +1,3 @@
-```powershell
 param(
     [Parameter(Mandatory = $true)]
     [ValidateSet("x86_64", "arm64")]
@@ -71,4 +70,3 @@ Get-ChildItem `
     $CheckDir `
     -Recurse |
     Select-Object FullName
-```

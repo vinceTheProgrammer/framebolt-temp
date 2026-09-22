@@ -7,7 +7,8 @@ cd gstreamer-android-runtime
 # for abi in armeabi-v7a arm64-v8a x86 x86_64; do
 for abi in armv7 arm64 x86 x86_64; do
   SRC="./${abi}/lib"
-  DST="../apps/mobile/android/libs/${abi}"
+  BASE="../apps/mobile/android/libs"
+  DST="${BASE}/${abi}"
 
   mkdir -p "$DST"
 
@@ -17,6 +18,9 @@ for abi in armv7 arm64 x86 x86_64; do
   find $SRC/gstreamer-1.0 -name "*.so" -exec cp {} "$DST/" \;
   find $SRC/gio/modules -name "*.so" -exec cp {} "$DST/" \;
 done
+
+mv ${BASE}/armv7 ${BASE}/armeabi-v7a
+mv ${BASE}/arm64 ${BASE}/arm64-v8a
 
 echo "✅ GStreamer runtime staged"
 

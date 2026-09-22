@@ -1314,7 +1314,7 @@ jobs:
       - name: Install WiX
         shell: pwsh
         run: |
-          dotnet tool install --global wix
+          dotnet tool install --global wix --version 6.0.2
           wix --version
 
       - name: Get version
@@ -1362,7 +1362,7 @@ jobs:
       - name: Install WiX
         shell: pwsh
         run: |
-          dotnet tool install --global wix
+          dotnet tool install --global wix --version 6.0.2
           wix --version
 
       - name: Get version
