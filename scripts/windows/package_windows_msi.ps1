@@ -62,16 +62,14 @@ switch ($Architecture) {
     "x86_64" {
         $WixPlatform = "x64"
 
-        # Architecture-specific UpgradeCode.
-        # Keep this value unchanged for all future x64 releases.
+        # Keep this UpgradeCode unchanged for all future x64 releases.
         $UpgradeCode = "{A9A8A2D8-2C74-4B83-B7E5-9D4F6C2D9D31}"
     }
 
     "arm64" {
         $WixPlatform = "arm64"
 
-        # Architecture-specific UpgradeCode.
-        # Keep this value unchanged for all future ARM64 releases.
+        # Keep this UpgradeCode unchanged for all future ARM64 releases.
         $UpgradeCode = "{D4D5A4D5-9F4B-4D9D-9E4D-6B6C6E8E8A42}"
     }
 
@@ -116,7 +114,9 @@ if (Test-Path $IconFile) {
         -Force
 
     $IconXml = @"
-        <Icon Id="FrameboltIcon" SourceFile="$IconFile" />
+        <Icon
+            Id="FrameboltIcon"
+            SourceFile="$IconFile" />
 
         <Property
             Id="ARPPRODUCTICON"
@@ -125,24 +125,55 @@ if (Test-Path $IconFile) {
 }
 
 # ------------------------------------------------------------
+# Shortcut XML
+# ------------------------------------------------------------
+
+if (Test-Path $IconFile) {
+    $ShortcutXml = @'
+            <Shortcut
+                Id="StartMenuShortcut"
+                Directory="APPLICATIONPROGRAMSFOLDER"
+                Name="Framebolt"
+                Description="Launch Framebolt"
+                Target="[APPLICATIONFOLDER]framebolt.exe"
+                WorkingDirectory="APPLICATIONFOLDER"
+                Icon="FrameboltIcon"
+                Advertise="no" />
+'@
+}
+else {
+    $ShortcutXml = @'
+            <Shortcut
+                Id="StartMenuShortcut"
+                Directory="APPLICATIONPROGRAMSFOLDER"
+                Name="Framebolt"
+                Description="Launch Framebolt"
+                Target="[APPLICATIONFOLDER]framebolt.exe"
+                WorkingDirectory="APPLICATIONFOLDER"
+                Advertise="no" />
+'@
+}
+
+# ------------------------------------------------------------
 # WiX source
 # ------------------------------------------------------------
 #
 # ProductCode is intentionally omitted.
-# WiX generates the ProductCode from the package identity.
+#
+# WiX generates the ProductCode for the package.
 #
 # UpgradeCode is architecture-specific and MUST remain unchanged
 # for all future releases of that architecture.
 #
-# The architecture itself is selected by:
+# Architecture is selected by:
 #
 #     wix build ... -arch x64
 #     wix build ... -arch arm64
 #
-# Do not add Platform to the Package element.
+# Do not put Platform on the Package element.
 # ------------------------------------------------------------
 
-@"
+$WixSource = @"
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
 
     <Package
@@ -212,18 +243,7 @@ $IconXml
             Id="ApplicationShortcuts"
             Directory="APPLICATIONFOLDER">
 
-            <Shortcut
-                Id="StartMenuShortcut"
-                Directory="APPLICATIONPROGRAMSFOLDER"
-                Name="Framebolt"
-                Description="Launch Framebolt"
-                Target="[APPLICATIONFOLDER]framebolt.exe"
-                WorkingDirectory="APPLICATIONFOLDER"
-                Advertise="no"$(
-                if ($IconXml) {
-                    ', Icon="FrameboltIcon"'
-                }
-            ) />
+$ShortcutXml
 
             <RegistryValue
                 Root="HKLM"
@@ -238,9 +258,15 @@ $IconXml
     </Fragment>
 
 </Wix>
-"@ | Set-Content `
+"@
+
+$WixSource | Set-Content `
     -Path $WixFile `
     -Encoding UTF8
+
+Write-Host ""
+Write-Host "Generated WiX source:"
+Get-Content $WixFile
 
 Write-Host ""
 Write-Host "Building Windows MSI..."
