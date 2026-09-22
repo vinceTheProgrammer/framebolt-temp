@@ -1006,7 +1006,8 @@ jobs:
       - build-rpm-opensuse
       - build-flatpak
       - build-appimage
-      - build-snap
+      - build-snap-x64
+      - build-snap-arm64
       - build-arch-x64
       - build-arch-arm64
       - build-windows-portable
