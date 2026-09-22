@@ -124,6 +124,15 @@ Write-Host ""
 Write-Host "GStreamer lib:"
 Write-Host "  $GStreamerLib"
 
+"GSTREAMER_ROOT=$GStreamerRoot" |
+    Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+
+"GSTREAMER_BIN=$GStreamerBin" |
+    Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+
+"GSTREAMER_LIB=$GStreamerLib" |
+    Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+
 if (-not (Test-Path $GStreamerBin)) {
     throw "GStreamer bin directory was not found: $GStreamerBin"
 }

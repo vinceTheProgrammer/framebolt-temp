@@ -912,7 +912,6 @@ jobs:
       - name: Verify GStreamer
         shell: pwsh
         run: |
-          $GStreamerRoot = "C:\gstreamer\1.0"
           ./scripts/windows/verify_gstreamer.ps1
 
       - name: Get version
@@ -941,7 +940,6 @@ jobs:
       - name: Prepare Windows staging directory
         shell: pwsh
         run: |
-          $GStreamerRoot = "C:\gstreamer\1.0"
           $ErrorActionPreference = "Stop"
           $Stage = "dist/windows-staging"
 
@@ -963,7 +961,7 @@ jobs:
           Write-Host "Copying GStreamer runtime DLLs..."
 
           Copy-Item `
-            "$GStreamerRoot\bin\*.dll" `
+            "$env:GSTREAMER_ROOT\bin\*.dll" `
             "$Stage" `
             -Force
 
@@ -973,7 +971,7 @@ jobs:
             "$Stage/lib/gstreamer-1.0" | Out-Null
 
           Copy-Item `
-            "$GStreamerRoot/lib/gstreamer-1.0/*.dll" `
+            "$env:GSTREAMER_ROOT/lib/gstreamer-1.0/*.dll" `
             "$Stage/lib/gstreamer-1.0" `
             -Force
 
@@ -1025,7 +1023,6 @@ jobs:
       - name: Verify GStreamer
         shell: pwsh
         run: |
-          $GStreamerRoot = "C:\gstreamer\1.0"
           ./scripts/windows/verify_gstreamer.ps1
 
       - name: Get version
@@ -1054,7 +1051,6 @@ jobs:
       - name: Prepare Windows staging directory
         shell: pwsh
         run: |
-          $GStreamerRoot = "C:\gstreamer\1.0"
           $ErrorActionPreference = "Stop"
           $Stage = "dist/windows-staging"
 
@@ -1076,7 +1072,7 @@ jobs:
           Write-Host "Copying GStreamer runtime DLLs..."
 
           Copy-Item `
-            "$GStreamerRoot\bin\*.dll" `
+            "$env:GSTREAMER_ROOT\bin\*.dll" `
             "$Stage" `
             -Force
 
@@ -1086,7 +1082,7 @@ jobs:
             "$Stage/lib/gstreamer-1.0" | Out-Null
 
           Copy-Item `
-            "$GStreamerRoot/lib/gstreamer-1.0/*.dll" `
+            "$env:GSTREAMER_ROOT/lib/gstreamer-1.0/*.dll" `
             "$Stage/lib/gstreamer-1.0" `
             -Force
 
