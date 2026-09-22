@@ -61,10 +61,18 @@ if (Test-Path $Output) {
 switch ($Architecture) {
     "x86_64" {
         $WixPlatform = "x64"
+
+        # Architecture-specific UpgradeCode.
+        # Keep this value unchanged for all future x64 releases.
+        $UpgradeCode = "{A9A8A2D8-2C74-4B83-B7E5-9D4F6C2D9D31}"
     }
 
     "arm64" {
         $WixPlatform = "arm64"
+
+        # Architecture-specific UpgradeCode.
+        # Keep this value unchanged for all future ARM64 releases.
+        $UpgradeCode = "{D4D5A4D5-9F4B-4D9D-9E4D-6B6C6E8E8A42}"
     }
 
     default {
@@ -82,9 +90,9 @@ if (-not $Wix) {
     throw @"
 WiX Toolset was not found.
 
-Install WiX 4 before running this script, for example:
+Install WiX 6 before running this script, for example:
 
-    dotnet tool install --global wix
+    dotnet tool install --global wix --version 6.0.2
 
 Then make sure 'wix' is available on PATH.
 "@
@@ -99,7 +107,7 @@ Write-Host "  $($Wix.Source)"
 
 $IconFile = Join-Path $Root "framebolt.ico"
 
-$IconSource = ""
+$IconXml = ""
 
 if (Test-Path $IconFile) {
     Copy-Item `
@@ -107,8 +115,12 @@ if (Test-Path $IconFile) {
         (Join-Path $InstallerDir "framebolt.ico") `
         -Force
 
-    $IconSource = @"
+    $IconXml = @"
         <Icon Id="FrameboltIcon" SourceFile="$IconFile" />
+
+        <Property
+            Id="ARPPRODUCTICON"
+            Value="FrameboltIcon" />
 "@
 }
 
@@ -116,14 +128,18 @@ if (Test-Path $IconFile) {
 # WiX source
 # ------------------------------------------------------------
 #
-# The UpgradeCode MUST remain unchanged between releases.
+# ProductCode is intentionally omitted.
+# WiX generates the ProductCode from the package identity.
 #
-# ProductCode is intentionally omitted so Windows Installer/WiX
-# can generate a new product identity for each package.
+# UpgradeCode is architecture-specific and MUST remain unchanged
+# for all future releases of that architecture.
 #
-# The same UpgradeCode is used for x64 and ARM64 because these
-# are architecture-specific packages for the same application.
-# The architecture is enforced by the Package/@Platform value.
+# The architecture itself is selected by:
+#
+#     wix build ... -arch x64
+#     wix build ... -arch arm64
+#
+# Do not add Platform to the Package element.
 # ------------------------------------------------------------
 
 @"
@@ -133,11 +149,10 @@ if (Test-Path $IconFile) {
         Name="Framebolt"
         Manufacturer="Framebolt"
         Version="$Version"
-        UpgradeCode="{A9A8A2D8-2C74-4B83-B7E5-9D4F6C2D9D31}"
+        UpgradeCode="$UpgradeCode"
         Language="1033"
         InstallerVersion="500"
-        Scope="perMachine"
-        Platform="$WixPlatform">
+        Scope="perMachine">
 
         <SummaryInformation
             Description="Framebolt media application"
@@ -150,18 +165,18 @@ if (Test-Path $IconFile) {
 
         <MediaTemplate EmbedCab="yes" />
 
-        <Icon
-            Id="FrameboltIcon"
-            SourceFile="$IconFile" />
-
-        <Property Id="ARPPRODUCTICON" Value="FrameboltIcon" />
+$IconXml
 
         <StandardDirectory Id="ProgramFilesFolder">
-            <Directory Id="APPLICATIONFOLDER" Name="Framebolt" />
+            <Directory
+                Id="APPLICATIONFOLDER"
+                Name="Framebolt" />
         </StandardDirectory>
 
         <StandardDirectory Id="ProgramMenuFolder">
-            <Directory Id="APPLICATIONPROGRAMSFOLDER" Name="Framebolt" />
+            <Directory
+                Id="APPLICATIONPROGRAMSFOLDER"
+                Name="Framebolt" />
         </StandardDirectory>
 
         <Feature
@@ -172,8 +187,6 @@ if (Test-Path $IconFile) {
             Display="expand">
 
             <ComponentGroupRef Id="ApplicationFiles" />
-
-            <ComponentRef Id="ApplicationExecutable" />
 
             <ComponentRef Id="ApplicationShortcuts" />
 
@@ -187,26 +200,9 @@ if (Test-Path $IconFile) {
             Id="ApplicationFiles"
             Directory="APPLICATIONFOLDER">
 
-            <Files
-                Include="$Stage\**"
-                Exclude="$Stage\framebolt.exe" />
+            <Files Include="$Stage\**" />
 
         </ComponentGroup>
-
-    </Fragment>
-
-    <Fragment>
-
-        <Component
-            Id="ApplicationExecutable"
-            Directory="APPLICATIONFOLDER">
-
-            <File
-                Id="FrameboltExecutable"
-                Source="$Executable"
-                KeyPath="yes" />
-
-        </Component>
 
     </Fragment>
 
@@ -223,11 +219,14 @@ if (Test-Path $IconFile) {
                 Description="Launch Framebolt"
                 Target="[APPLICATIONFOLDER]framebolt.exe"
                 WorkingDirectory="APPLICATIONFOLDER"
-                Icon="FrameboltIcon"
-                Advertise="no" />
+                Advertise="no"$(
+                if ($IconXml) {
+                    ', Icon="FrameboltIcon"'
+                }
+            ) />
 
             <RegistryValue
-                Root="HKCU"
+                Root="HKLM"
                 Key="Software\Framebolt"
                 Name="Installed"
                 Type="integer"
@@ -245,7 +244,7 @@ if (Test-Path $IconFile) {
 
 Write-Host ""
 Write-Host "Building Windows MSI..."
-Write-Host "  Version:     $Version"
+Write-Host "  Version:      $Version"
 Write-Host "  Architecture: $Architecture"
 Write-Host "  WiX platform: $WixPlatform"
 Write-Host "  Input:        $Stage"
@@ -270,5 +269,6 @@ Write-Host "  $Output"
 
 Write-Host ""
 Write-Host "MSI information:"
+
 Get-Item $Output |
     Format-List Name, Length, FullName
