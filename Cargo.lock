@@ -1723,7 +1723,7 @@ dependencies = [
 
 [[package]]
 name = "framebolt-canvas"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "bytemuck",
  "glam",
@@ -1732,7 +1732,7 @@ dependencies = [
 
 [[package]]
 name = "framebolt-core"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "framebolt-gstreamer",
  "proptest",
@@ -1742,7 +1742,7 @@ dependencies = [
 
 [[package]]
 name = "framebolt-desktop"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "eframe",
  "egui_dock",
@@ -1752,7 +1752,7 @@ dependencies = [
 
 [[package]]
 name = "framebolt-egui"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "eframe",
  "egui-phosphor",
@@ -1766,18 +1766,18 @@ dependencies = [
 
 [[package]]
 name = "framebolt-gstreamer"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "gstreamer",
 ]
 
 [[package]]
 name = "framebolt-media"
-version = "0.1.9"
+version = "0.1.10"
 
 [[package]]
 name = "framebolt-mobile"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "cargo-apk2",
  "eframe",
@@ -2676,9 +2676,9 @@ checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "libredox"
-version = "0.1.24"
+version = "0.1.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6480ccc157a1389bb2e4891b24751b0f798ba640d22386f23143fbcc89da195a"
+checksum = "61ff90caf6077a803a240f62fdbe88645a890bbca49ef8174c3cb0404362171d"
 dependencies = [
  "bitflags 2.13.2",
  "libc",
