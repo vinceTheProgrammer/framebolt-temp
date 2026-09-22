@@ -912,6 +912,7 @@ jobs:
       - name: Verify GStreamer
         shell: pwsh
         run: |
+          $GStreamerRoot = "$env:GSTREAMER_ROOT"
           ./scripts/windows/verify_gstreamer.ps1
 
       - name: Get version
@@ -1023,6 +1024,7 @@ jobs:
       - name: Verify GStreamer
         shell: pwsh
         run: |
+          $GStreamerRoot = "$env:GSTREAMER_ROOT"
           ./scripts/windows/verify_gstreamer.ps1
 
       - name: Get version
