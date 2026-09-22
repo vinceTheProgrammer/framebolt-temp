@@ -771,9 +771,9 @@ jobs:
           path: dist/*.exe
           if-no-files-found: error
 
-  build-macos:
-    name: Build & Package MacOS
-    runs-on: macos-latest
+  build-macos-arm:
+    name: Build & Package MacOS (arm64)
+    runs-on: macos-26
 
     steps:
       - name: Checkout
@@ -786,7 +786,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          target: aarch64-apple-darwin, x86_64-apple-darwin
+          target: aarch64-apple-darwin
 
       - name: Build Framebolt aarch64
         run: |
@@ -814,11 +814,99 @@ jobs:
           mkdir -p dist
           mv target/release/framebolt-desktop.app dist/framebolt.app
 
-      - name: Upload MacOS .app artifact
+      - name: Package macOS app
+        shell: bash
+        run: |
+          if [[ -d "release-artifacts/framebolt.app" ]]; then
+            echo "Packaging macOS app..."
+
+            (
+              cd release-artifacts
+              ditto -c -k --sequesterRsrc --keepParent \
+                framebolt.app \
+                framebolt-macos-arm64.zip
+            )
+
+            rm -rf release-artifacts/framebolt.app
+          fi
+
+          echo "Release artifacts:"
+          find release-artifacts -type f -print
+
+      - name: Upload MacOS .zip artifact
         uses: actions/upload-artifact@v7
         with:
           name: framebolt-macos
-          path: dist/*.app
+          path: dist/*.zip
+          if-no-files-found: error
+
+  build-macos-intel:
+    name: Build & Package MacOS (Intel)
+    runs-on: macos-26-intel
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install GStreamer
+        run: brew install gstreamer
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          target: x86_64-apple-darwin
+
+      - name: Build Framebolt aarch64
+        run: |
+          cargo build \
+            -p framebolt-desktop \
+            --release \
+            --target x86_64-apple-darwin
+
+      - name: Create macOS app bundle
+        run: |
+          APP="target/release/framebolt-desktop.app"
+
+          mkdir -p "$APP/Contents/MacOS"
+          mkdir -p "$APP/Contents/Resources"
+
+          cp \
+            "target/x86_64-apple-darwin/release/framebolt-desktop" \
+            "$APP/Contents/MacOS/framebolt-desktop"
+
+      - name: Bundle GStreamer
+        run: ./scripts/macos/bundle_gstreamer.sh
+
+      - name: Move .app to dist
+        run: |
+          mkdir -p dist
+          mv target/release/framebolt-desktop.app dist/framebolt.app
+
+      - name: Package macOS app
+        shell: bash
+        run: |
+          if [[ -d "release-artifacts/framebolt.app" ]]; then
+            echo "Packaging macOS app..."
+
+            (
+              cd release-artifacts
+              ditto -c -k --sequesterRsrc --keepParent \
+                framebolt.app \
+                framebolt-macos-intel-x86.zip
+            )
+
+            rm -rf release-artifacts/framebolt.app
+          fi
+
+          echo "Release artifacts:"
+          find release-artifacts -type f -print
+
+      - name: Upload MacOS .zip artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-macos
+          path: dist/*.zip
           if-no-files-found: error
 
   release:
@@ -835,7 +923,8 @@ jobs:
       - build-arch
       - build-windows-portable
       - build-windows-installer
-      - build-macos
+      - build-macos-arm
+      - build-macos-intel
 
     permissions:
       contents: write
