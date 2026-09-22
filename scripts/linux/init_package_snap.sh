@@ -46,7 +46,7 @@ website: https://github.com/vinceTheProgrammer/framebolt
 apps:
   framebolt:
     command: bin/framebolt
-    desktop: meta/gui/${APP_ID}.desktop
+    desktop: gui/${APP_ID}.desktop
     plugs:
       - audio-playback
       - audio-record
