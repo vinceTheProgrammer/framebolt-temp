@@ -1723,7 +1723,7 @@ dependencies = [
 
 [[package]]
 name = "framebolt-canvas"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "bytemuck",
  "glam",
@@ -1732,7 +1732,7 @@ dependencies = [
 
 [[package]]
 name = "framebolt-core"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "framebolt-gstreamer",
  "proptest",
@@ -1742,7 +1742,7 @@ dependencies = [
 
 [[package]]
 name = "framebolt-desktop"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "eframe",
  "egui_dock",
@@ -1752,7 +1752,7 @@ dependencies = [
 
 [[package]]
 name = "framebolt-egui"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "eframe",
  "egui-phosphor",
@@ -1766,18 +1766,18 @@ dependencies = [
 
 [[package]]
 name = "framebolt-gstreamer"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "gstreamer",
 ]
 
 [[package]]
 name = "framebolt-media"
-version = "0.1.10"
+version = "0.1.11"
 
 [[package]]
 name = "framebolt-mobile"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "cargo-apk2",
  "eframe",

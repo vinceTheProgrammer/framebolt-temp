@@ -314,20 +314,11 @@ jobs:
               echo "==> Done"
             '
 
-      - name: Rename AppImage
-        run: |
-          APPIMAGE="$(find dist -maxdepth 1 -name '*.AppImage' -print -quit)"
-
-          test -n "$APPIMAGE"
-
-          mv "$APPIMAGE" \
-            "dist/framebolt-x86_64.AppImage"
-
       - name: Upload AppImage artifact
         uses: actions/upload-artifact@v7
         with:
           name: framebolt-appimage-x86_64
-          path: dist/framebolt-x86_64.AppImage
+          path: dist/*.AppImage
           if-no-files-found: error
 
   build-appimage-arm64:
@@ -425,20 +416,11 @@ jobs:
               echo "==> Done"
             '
 
-      - name: Rename AppImage
-        run: |
-          APPIMAGE="$(find dist -maxdepth 1 -name '*.AppImage' -print -quit)"
-
-          test -n "$APPIMAGE"
-
-          mv "$APPIMAGE" \
-            "dist/framebolt-arm64.AppImage"
-
       - name: Upload AppImage artifact
         uses: actions/upload-artifact@v7
         with:
           name: framebolt-appimage-arm64
-          path: dist/framebolt-arm64.AppImage
+          path: dist/*.AppImage
           if-no-files-found: error
 
   # ------------------------------------------------------------
