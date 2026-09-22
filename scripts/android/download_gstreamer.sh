@@ -15,10 +15,3 @@ echo "Downloading GStreamer Android Runtime..."
 curl -L "$GST_RUNTIME_URL" -o gstreamer-android-runtime.tar.xz
 mkdir -p gstreamer-android-runtime
 tar -xf gstreamer-android-runtime.tar.xz -C gstreamer-android-runtime
-
-pwd
-ls .
-pwd
-ls gstreamer-android
-pwd
-ls gstreamer-android-runtime

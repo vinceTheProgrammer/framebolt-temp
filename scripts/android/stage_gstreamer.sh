@@ -4,7 +4,8 @@ set -euo pipefail
 # ---- Runtime ----
 cd gstreamer-android-runtime
 
-for abi in armeabi-v7a arm64-v8a x86 x86_64; do
+# for abi in armeabi-v7a arm64-v8a x86 x86_64; do
+for abi in armv7 arm64 x86 x86_64; do
   SRC="./${abi}/lib"
   DST="../apps/mobile/android/libs/${abi}"
 
