@@ -54,7 +54,6 @@ apps:
       - desktop
       - desktop-legacy
       - home
-      - network
       - opengl
       - wayland
       - x11

@@ -363,8 +363,8 @@ jobs:
           path: dist/*.flatpak
           if-no-files-found: error
 
-  build-snap:
-    name: Build & Package Snap
+  build-snap-x64:
+    name: Build & Package Snap (x86_64)
     runs-on: ubuntu-22.04
 
     steps:
@@ -385,12 +385,43 @@ jobs:
       - name: Copy Snap to dist
         run: |
           mkdir -p dist
-          cp "${{ steps.snapcraft.outputs.snap }}" dist/
+          cp "${{ steps.snapcraft.outputs.snap }}" dist/framebolt-x86_64.snap
 
       - name: Upload Snap artifact
         uses: actions/upload-artifact@v7
         with:
-          name: framebolt-snap
+          name: framebolt-snap-x86_64
+          path: dist/*.snap
+          if-no-files-found: error
+
+  build-snap-arm64:
+    name: Build & Package Snap (arm64)
+    runs-on: ubuntu-22.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Prepare Snap package
+        run: |
+          ./scripts/linux/init_package_snap.sh
+
+      - name: Build Snap
+        uses: canonical/action-build@v1
+        id: snapcraft
+
+      - name: Copy Snap to dist
+        run: |
+          mkdir -p dist
+          cp "${{ steps.snapcraft.outputs.snap }}" dist/framebolt-arm64.snap
+
+      - name: Upload Snap artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-snap-arm64
           path: dist/*.snap
           if-no-files-found: error
   
