@@ -76,22 +76,66 @@ if ($Process.ExitCode -ne 0) {
 Write-Host ""
 Write-Host "GStreamer installation completed."
 
-if (-not (Test-Path "$GStreamerRoot\bin")) {
-    throw "GStreamer bin directory was not found: $GStreamerRoot\bin"
+Write-Host ""
+Write-Host "Locating GStreamer installation..."
+
+$GStreamerDll = Get-ChildItem `
+    -Path $GStreamerInstallDir `
+    -Filter "gstreamer-1.0-0.dll" `
+    -File `
+    -Recurse `
+    -ErrorAction SilentlyContinue |
+    Select-Object -First 1
+
+if (-not $GStreamerDll) {
+    Write-Host ""
+    Write-Host "Contents of $GStreamerInstallDir:"
+    
+    if (Test-Path $GStreamerInstallDir) {
+        Get-ChildItem `
+            -Path $GStreamerInstallDir `
+            -Recurse `
+            -File |
+            Select-Object -First 100 FullName |
+            ForEach-Object {
+                Write-Host "  $($_.FullName)"
+            }
+    }
+    
+    throw "Could not locate gstreamer-1.0-0.dll under $GStreamerInstallDir"
 }
 
-if (-not (Test-Path "$GStreamerRoot\lib")) {
-    throw "GStreamer lib directory was not found: $GStreamerRoot\lib"
-}
+$GStreamerRoot = Split-Path `
+    (Split-Path $GStreamerDll.FullName -Parent) `
+    -Parent
+
+$GStreamerBin = Join-Path $GStreamerRoot "bin"
+$GStreamerLib = Join-Path $GStreamerRoot "lib"
 
 Write-Host ""
-Write-Host "GStreamer installed at:"
+Write-Host "GStreamer root:"
 Write-Host "  $GStreamerRoot"
+
+Write-Host ""
+Write-Host "GStreamer bin:"
+Write-Host "  $GStreamerBin"
+
+Write-Host ""
+Write-Host "GStreamer lib:"
+Write-Host "  $GStreamerLib"
+
+if (-not (Test-Path $GStreamerBin)) {
+    throw "GStreamer bin directory was not found: $GStreamerBin"
+}
+
+if (-not (Test-Path $GStreamerLib)) {
+    throw "GStreamer lib directory was not found: $GStreamerLib"
+}
 
 Write-Host ""
 Write-Host "Adding GStreamer to PATH..."
 
-"$GStreamerRoot\bin" |
+$GStreamerBin |
     Out-File `
         -FilePath $env:GITHUB_PATH `
         -Encoding utf8
