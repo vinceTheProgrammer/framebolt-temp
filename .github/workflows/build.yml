@@ -314,8 +314,8 @@ jobs:
   # ------------------------------------------------------------
   # Flatpak
   # ------------------------------------------------------------
-  build-flatpak:
-    name: Build & Package Flatpak
+  build-flatpak-x64:
+    name: Build & Package Flatpak (x86_64)
     runs-on: ubuntu-22.04
 
     steps:
@@ -359,7 +359,56 @@ jobs:
       - name: Upload Flatpak artifact
         uses: actions/upload-artifact@v7
         with:
-          name: framebolt-flatpak
+          name: framebolt-flatpak-x86_64
+          path: dist/*.flatpak
+          if-no-files-found: error
+
+  build-flatpak-arm64:
+    name: Build & Package Flatpak (arm64)
+    runs-on: ubuntu-22.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Flatpak tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            libgstreamer1.0-dev \
+            libglib2.0-dev \
+            libunwind-dev \
+            flatpak \
+            flatpak-builder
+
+      - name: Install Flatpak runtime
+        run: |
+         sudo flatpak remote-add --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo
+
+          sudo flatpak install --system -y flathub \
+            org.freedesktop.Platform//24.08 \
+            org.freedesktop.Sdk//24.08
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build Framebolt
+        run: |
+          cargo build \
+            -p framebolt-desktop \
+            --release
+          
+      - name: Package Flatpak
+        run: |
+          ./scripts/linux/package_flatpak.sh
+
+      - name: Upload Flatpak artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-flatpak-arm64
           path: dist/*.flatpak
           if-no-files-found: error
 
