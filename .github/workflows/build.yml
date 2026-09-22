@@ -890,9 +890,9 @@ jobs:
           path: dist/framebolt-arm64
           if-no-files-found: error
 
-  build-windows:
-    name: Build Windows
-    runs-on: windows-2022
+  build-windows-x64:
+    name: Build Windows (x86_64)
+    runs-on: windows-2025
 
     steps:
       - name: Checkout
@@ -907,129 +907,13 @@ jobs:
       - name: Install GStreamer
         shell: pwsh
         run: |
-          $GStreamerVersion = "1.26.7"
-          $GStreamerInstallDir = "C:\gstreamer"
-          $GStreamerRoot = "C:\gstreamer\1.0\msvc_x86_64"
-
-          $BaseUrl = "https://gstreamer.freedesktop.org/data/pkg/windows/$GStreamerVersion/msvc"
-
-          $DevelUrl = "$BaseUrl/gstreamer-1.0-devel-msvc-x86_64-$GStreamerVersion.msi"
-          $RuntimeUrl = "$BaseUrl/gstreamer-1.0-msvc-x86_64-$GStreamerVersion.msi"
-
-          $DevelMsi = Join-Path $env:RUNNER_TEMP "gstreamer-devel.msi"
-          $RuntimeMsi = Join-Path $env:RUNNER_TEMP "gstreamer-runtime.msi"
-
-          Write-Host "Downloading GStreamer development package..."
-          Invoke-WebRequest `
-            -Uri $DevelUrl `
-            -OutFile $DevelMsi
-
-          Write-Host "Installing GStreamer development package..."
-
-          $Process = Start-Process `
-            -FilePath "msiexec.exe" `
-            -ArgumentList @(
-              "/i"
-              "`"$DevelMsi`""
-              "/qn"
-              "INSTALLDIR=$GStreamerInstallDir"
-              "/L*v"
-              "`"$env:RUNNER_TEMP\gstreamer-devel.log`""
-            ) `
-            -Wait `
-            -PassThru
-
-          if ($Process.ExitCode -ne 0) {
-            Write-Host "GStreamer development installation failed with exit code $($Process.ExitCode)"
-            Get-Content "$env:RUNNER_TEMP\gstreamer-devel.log" -Tail 50
-            exit 1
-          }
-
-          Write-Host "GStreamer development package installed successfully."
-
-          Write-Host "Downloading GStreamer runtime package..."
-          Invoke-WebRequest `
-            -Uri $RuntimeUrl `
-            -OutFile $RuntimeMsi
-
-          Write-Host "Installing GStreamer runtime package..."
-
-          $Process = Start-Process `
-            -FilePath "msiexec.exe" `
-            -ArgumentList @(
-              "/i"
-              "`"$RuntimeMsi`""
-              "/qn"
-              "INSTALLDIR=$GStreamerInstallDir"
-              "/L*v"
-              "`"$env:RUNNER_TEMP\gstreamer-runtime.log`""
-            ) `
-            -Wait `
-            -PassThru
-
-          if ($Process.ExitCode -ne 0) {
-            Write-Host "GStreamer runtime installation failed with exit code $($Process.ExitCode)"
-            Get-Content "$env:RUNNER_TEMP\gstreamer-runtime.log" -Tail 50
-            exit 1
-          }
-
-          Write-Host "GStreamer runtime package installed successfully."
-
-          if (-not (Test-Path "$GStreamerRoot\bin")) { 
-            throw "GStreamer bin directory was not found: $GStreamerRoot\bin" 
-          } 
-          
-          Write-Host "GStreamer installed at:" 
-          Write-Host " $GStreamerRoot"
-
-          Write-Host "Adding GStreamer to PATH..." 
-          "$GStreamerRoot\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
-
-          Write-Host "GStreamer installation complete."
+          ./scripts/windows/install_gstreamer.ps1 -Architecture x86_64
 
       - name: Verify GStreamer
         shell: pwsh
         run: |
-          $GStreamerRoot = "C:\gstreamer\1.0\msvc_x86_64"
-
-          Write-Host "Checking GStreamer installation..."
-          
-          if (-not (Test-Path $GStreamerRoot)) {
-            throw "GStreamer installation directory was not found: $GStreamerRoot"
-          }
-
-          if (-not (Test-Path "$GStreamerRoot\bin")) {
-            throw "GStreamer bin directory was not found: $GStreamerRoot\bin"
-          }
-
-          if (-not (Test-Path "$GStreamerRoot\lib\gstreamer-1.0")) {
-            throw "GStreamer plugin directory was not found: $GStreamerRoot\lib\gstreamer-1.0"
-          }
-
-          Write-Host "GStreamer installation found at:"
-          Write-Host "  $GStreamerRoot"
-
-          Write-Host ""
-          Write-Host "GStreamer version:"
-          & "$GStreamerRoot\bin\gst-launch-1.0.exe" --version
-
-          if ($LASTEXITCODE -ne 0) {
-            throw "gst-launch-1.0 failed with exit code $LASTEXITCODE"
-          }
-
-          Write-Host ""
-          Write-Host "Checking GStreamer plugins..."
-
-          $PluginCount = @(Get-ChildItem "$GStreamerRoot\lib\gstreamer-1.0" -Filter "*.dll").Count
-
-          if ($PluginCount -eq 0) {
-            throw "No GStreamer plugins were found."
-          }
-
-          Write-Host "Found $PluginCount GStreamer plugin DLL(s)."
-
-          Write-Host ""
-          Write-Host "GStreamer verification successful."
+          $GStreamerRoot = "C:\gstreamer\1.0"
+          ./scripts/windows/verify_gstreamer.ps1
 
       - name: Get version
         id: version
@@ -1052,16 +936,13 @@ jobs:
           cargo build `
             --release `
             --locked `
-            -p framebolt-desktop `
-            --target x86_64-pc-windows-msvc
+            -p framebolt-desktop
 
       - name: Prepare Windows staging directory
         shell: pwsh
         run: |
-          $GStreamerRoot = "C:\gstreamer\1.0\msvc_x86_64"
-
+          $GStreamerRoot = "C:\gstreamer\1.0"
           $ErrorActionPreference = "Stop"
-
           $Stage = "dist/windows-staging"
 
           Remove-Item `
@@ -1076,7 +957,7 @@ jobs:
             $Stage | Out-Null
 
           Copy-Item `
-            "target/x86_64-pc-windows-msvc/release/framebolt-desktop.exe" `
+            "target/release/framebolt-desktop.exe" `
             "$Stage/framebolt.exe"
 
           Write-Host "Copying GStreamer runtime DLLs..."
@@ -1118,16 +999,129 @@ jobs:
       - name: Upload Windows staging artifact
         uses: actions/upload-artifact@v7
         with:
-          name: framebolt-windows-staging
+          name: framebolt-windows-staging-x86_64
           path: dist/windows-staging/
           if-no-files-found: error
 
-  build-windows-portable:
-    name: Build Windows Portable
-    runs-on: windows-2022
+  build-windows-arm64:
+    name: Build Windows (ARM64)
+    runs-on: windows-11-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          target: aarch64-pc-windows-msvc
+
+      - name: Install GStreamer
+        shell: pwsh
+        run: |
+          ./scripts/windows/install_gstreamer.ps1 -Architecture arm64
+
+      - name: Verify GStreamer
+        shell: pwsh
+        run: |
+          $GStreamerRoot = "C:\gstreamer\1.0"
+          ./scripts/windows/verify_gstreamer.ps1
+
+      - name: Get version
+        id: version
+        shell: pwsh
+        run: |
+          $Version = cargo metadata `
+            --format-version 1 `
+            --no-deps |
+            ConvertFrom-Json |
+            Select-Object -ExpandProperty packages |
+            Select-Object -First 1 |
+            Select-Object -ExpandProperty version
+
+          "version=$Version" >> $env:GITHUB_OUTPUT
+          "FRAMEBOLT_VERSION=$Version" >> $env:GITHUB_ENV
+
+      - name: Build Framebolt
+        shell: pwsh
+        run: |
+          cargo build `
+            --release `
+            --locked `
+            -p framebolt-desktop
+
+      - name: Prepare Windows staging directory
+        shell: pwsh
+        run: |
+          $GStreamerRoot = "C:\gstreamer\1.0"
+          $ErrorActionPreference = "Stop"
+          $Stage = "dist/windows-staging"
+
+          Remove-Item `
+            -Recurse `
+            -Force `
+            -ErrorAction SilentlyContinue `
+            $Stage
+
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            $Stage | Out-Null
+
+          Copy-Item `
+            "target/release/framebolt-desktop.exe" `
+            "$Stage/framebolt.exe"
+
+          Write-Host "Copying GStreamer runtime DLLs..."
+
+          Copy-Item `
+            "$GStreamerRoot\bin\*.dll" `
+            "$Stage" `
+            -Force
+
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            "$Stage/lib/gstreamer-1.0" | Out-Null
+
+          Copy-Item `
+            "$GStreamerRoot/lib/gstreamer-1.0/*.dll" `
+            "$Stage/lib/gstreamer-1.0" `
+            -Force
+
+          Write-Host "Windows staging contents:"
+
+          Get-ChildItem `
+            $Stage `
+            -Recurse |
+            Select-Object FullName, Length
+
+      - name: Verify Windows binary
+        shell: pwsh
+        run: |
+          $Binary = "dist/windows-staging/framebolt.exe"
+
+          if (-not (Test-Path $Binary)) {
+            throw "Windows binary was not created."
+          }
+
+          Get-Item $Binary |
+            Format-List Name, Length, FullName
+
+      - name: Upload Windows staging artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-windows-staging-arm64
+          path: dist/windows-staging/
+          if-no-files-found: error
+
+  build-windows-portable-x64:
+    name: Build Windows Portable (x86_64)
+    runs-on: windows-2025
 
     needs:
-      - build-windows
+      - build-windows-x64
 
     steps:
       - name: Checkout
@@ -1136,7 +1130,7 @@ jobs:
       - name: Download Windows staging
         uses: actions/download-artifact@v8
         with:
-          name: framebolt-windows-staging
+          name: framebolt-windows-staging-x86_64
           path: dist/windows-staging
 
       - name: Get version
@@ -1155,21 +1149,21 @@ jobs:
       - name: Package portable ZIP
         shell: pwsh
         run: |
-          ./scripts/windows/package_windows_portable.ps1
+          ./scripts/windows/package_windows_portable.ps1 -Architecture x86_64
 
       - name: Upload Windows portable artifact
         uses: actions/upload-artifact@v7
         with:
-          name: framebolt-windows-portable
+          name: framebolt-windows-portable-x64
           path: dist/*.zip
           if-no-files-found: error
 
-  build-windows-installer:
-    name: Build Windows Installer
-    runs-on: windows-2022
+  build-windows-portable-arm64:
+    name: Build Windows Portable (arm64)
+    runs-on: windows-11-arm
 
     needs:
-      - build-windows
+      - build-windows-arm64
 
     steps:
       - name: Checkout
@@ -1178,7 +1172,49 @@ jobs:
       - name: Download Windows staging
         uses: actions/download-artifact@v8
         with:
-          name: framebolt-windows-staging
+          name: framebolt-windows-staging-arm64
+          path: dist/windows-staging
+
+      - name: Get version
+        shell: pwsh
+        run: |
+          $Version = cargo metadata `
+            --format-version 1 `
+            --no-deps |
+            ConvertFrom-Json |
+            Select-Object -ExpandProperty packages |
+            Select-Object -First 1 |
+            Select-Object -ExpandProperty version
+
+          "FRAMEBOLT_VERSION=$Version" >> $env:GITHUB_ENV
+
+      - name: Package portable ZIP
+        shell: pwsh
+        run: |
+          ./scripts/windows/package_windows_portable.ps1 -Architecture arm64
+
+      - name: Upload Windows portable artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-windows-portable-arm64
+          path: dist/*.zip
+          if-no-files-found: error
+
+  build-windows-installer-x64:
+    name: Build Windows Installer (x86_64)
+    runs-on: windows-2025
+
+    needs:
+      - build-windows-x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Windows staging
+        uses: actions/download-artifact@v8
+        with:
+          name: framebolt-windows-staging-x86_64
           path: dist/windows-staging
 
       - name: Install Inno Setup
@@ -1202,12 +1238,59 @@ jobs:
       - name: Package Windows installer
         shell: pwsh
         run: |
-          ./scripts/windows/package_windows_installer.ps1
+          ./scripts/windows/package_windows_installer.ps1 -Architecture x86_64
 
       - name: Upload Windows installer artifact
         uses: actions/upload-artifact@v7
         with:
-          name: framebolt-windows-installer
+          name: framebolt-windows-installer-x64
+          path: dist/*.exe
+          if-no-files-found: error
+
+  build-windows-installer-arm64:
+    name: Build Windows Installer (arm64)
+    runs-on: windows-11-arm
+
+    needs:
+      - build-windows-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Windows staging
+        uses: actions/download-artifact@v8
+        with:
+          name: framebolt-windows-staging-arm64
+          path: dist/windows-staging
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress --yes
+
+      - name: Get version
+        shell: pwsh
+        run: |
+          $Version = cargo metadata `
+            --format-version 1 `
+            --no-deps |
+            ConvertFrom-Json |
+            Select-Object -ExpandProperty packages |
+            Select-Object -First 1 |
+            Select-Object -ExpandProperty version
+
+          "FRAMEBOLT_VERSION=$Version" >> $env:GITHUB_ENV
+
+      - name: Package Windows installer
+        shell: pwsh
+        run: |
+          ./scripts/windows/package_windows_installer.ps1 -Architecture arm64
+
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-windows-installer-arm64
           path: dist/*.exe
           if-no-files-found: error
 
@@ -1335,7 +1418,8 @@ jobs:
     runs-on: ubuntu-22.04
 
     needs:
-      - build-deb
+      - build-deb-x64
+      - build-deb-arm64
       - build-rpm-fedora-x64
       - build-rpm-fedora-arm64
       - build-rpm-opensuse-x64
@@ -1348,8 +1432,10 @@ jobs:
       - build-snap-arm64
       - build-arch-x64
       - build-arch-arm64
-      - build-windows-portable
-      - build-windows-installer
+      - build-windows-portable-x64
+      - build-windows-installer-x64
+      - build-windows-portable-arm64
+      - build-windows-installer-arm64
       - build-macos-arm
       - build-macos-intel
 

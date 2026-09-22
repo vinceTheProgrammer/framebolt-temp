@@ -1,3 +1,10 @@
+```powershell
+param(
+    [Parameter(Mandatory = $true)]
+    [ValidateSet("x86_64", "arm64")]
+    [string]$Architecture
+)
+
 $ErrorActionPreference = "Stop"
 
 $Version = $env:FRAMEBOLT_VERSION
@@ -7,15 +14,17 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
 }
 
 $PackageName = "framebolt"
-$Architecture = "x86_64"
 
 $Root = Resolve-Path (Join-Path $PSScriptRoot "../..")
 $Stage = Join-Path $Root "dist/windows-staging"
 $Dist = Join-Path $Root "dist"
 
-$Output = Join-Path $Dist "${PackageName}-${Version}-windows-${Architecture}-portable.zip"
+$Output = Join-Path `
+    $Dist `
+    "${PackageName}-${Version}-windows-${Architecture}-portable.zip"
 
 Write-Host "Packaging Framebolt $Version portable Windows release..."
+Write-Host "Architecture: $Architecture"
 
 if (-not (Test-Path $Stage)) {
     throw "Windows staging directory does not exist: $Stage"
@@ -44,9 +53,22 @@ Write-Host "  $Output"
 
 Write-Host ""
 Write-Host "Contents:"
-Expand-Archive -Path $Output -DestinationPath (Join-Path $env:TEMP "framebolt-portable-check") -Force
+
+$CheckDir = Join-Path `
+    $env:TEMP `
+    "framebolt-portable-check-$Architecture"
+
+if (Test-Path $CheckDir) {
+    Remove-Item -Recurse -Force $CheckDir
+}
+
+Expand-Archive `
+    -Path $Output `
+    -DestinationPath $CheckDir `
+    -Force
 
 Get-ChildItem `
-    (Join-Path $env:TEMP "framebolt-portable-check") `
+    $CheckDir `
     -Recurse |
     Select-Object FullName
+```
