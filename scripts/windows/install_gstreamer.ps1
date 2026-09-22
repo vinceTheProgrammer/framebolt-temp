@@ -8,20 +8,12 @@ $ErrorActionPreference = "Stop"
 
 $GStreamerVersion = "1.28.7"
 $GStreamerInstallDir = "C:\gstreamer"
-
-$GStreamerRoot = Join-Path `
-    $GStreamerInstallDir `
-    "1.0"
+$GStreamerRoot = Join-Path $GStreamerInstallDir "1.0"
 
 $PackageName = "gstreamer-1.0-msvc-$Architecture-$GStreamerVersion.exe"
-
 $BaseUrl = "https://gstreamer.freedesktop.org/data/pkg/windows/$GStreamerVersion/msvc"
-
 $DevelUrl = "$BaseUrl/$PackageName"
-
-$Installer = Join-Path `
-    $env:RUNNER_TEMP `
-    $PackageName
+$Installer = Join-Path $env:RUNNER_TEMP $PackageName
 
 Write-Host "GStreamer version: $GStreamerVersion"
 Write-Host "GStreamer architecture: $Architecture"
@@ -40,18 +32,42 @@ if (-not (Test-Path $Installer)) {
 }
 
 Write-Host ""
+Write-Host "Installer downloaded:"
+Write-Host "  $Installer"
+Write-Host "  $((Get-Item $Installer).Length) bytes"
+
+Write-Host ""
 Write-Host "Installing GStreamer..."
+
+$Arguments = @(
+    "/TYPE=devel"
+    "/DIR=$GStreamerInstallDir"
+    "/VERYSILENT"
+    "/SUPPRESSMSGBOXES"
+    "/NORESTART"
+    "/CLOSEAPPLICATIONS"
+    "/RESTARTAPPLICATIONS"
+)
 
 $Process = Start-Process `
     -FilePath $Installer `
-    -ArgumentList @(
-        "/TYPE=devel"
-        "/DIR=$GStreamerInstallDir"
-        "/VERYSILENT"
-        "/NORESTART"
-    ) `
-    -Wait `
+    -ArgumentList $Arguments `
     -PassThru
+
+$TimeoutSeconds = 600
+
+if (-not $Process.WaitForExit($TimeoutSeconds * 1000)) {
+    Write-Host "GStreamer installer exceeded $TimeoutSeconds seconds."
+
+    try {
+        $Process.Kill()
+    }
+    catch {
+        Write-Host "Could not terminate installer process: $($_.Exception.Message)"
+    }
+
+    throw "GStreamer installation timed out after $TimeoutSeconds seconds."
+}
 
 if ($Process.ExitCode -ne 0) {
     throw "GStreamer installation failed with exit code $($Process.ExitCode)."

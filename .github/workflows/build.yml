@@ -1294,6 +1294,102 @@ jobs:
           path: dist/*.exe
           if-no-files-found: error
 
+  build-windows-msi-x64:
+    name: Build Windows MSI (x86_64)
+    runs-on: windows-2025
+
+    needs:
+      - build-windows-x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Windows staging
+        uses: actions/download-artifact@v8
+        with:
+          name: framebolt-windows-staging-x86_64
+          path: dist/windows-staging
+
+      - name: Install WiX
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix
+          wix --version
+
+      - name: Get version
+        shell: pwsh
+        run: |
+          $Version = cargo metadata `
+            --format-version 1 `
+            --no-deps |
+            ConvertFrom-Json |
+            Select-Object -ExpandProperty packages |
+            Select-Object -First 1 |
+            Select-Object -ExpandProperty version
+
+          "FRAMEBOLT_VERSION=$Version" >> $env:GITHUB_ENV
+
+      - name: Build Windows MSI
+        shell: pwsh
+        run: |
+          ./scripts/windows/package_windows_msi.ps1 -Architecture x86_64
+
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-windows-msi-x64
+          path: dist/*.msi
+          if-no-files-found: error
+
+  build-windows-msi-arm64:
+    name: Build Windows MSI (arm64)
+    runs-on: windows-11-arm
+
+    needs:
+      - build-windows-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Windows staging
+        uses: actions/download-artifact@v8
+        with:
+          name: framebolt-windows-staging-arm64
+          path: dist/windows-staging
+
+      - name: Install WiX
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix
+          wix --version
+
+      - name: Get version
+        shell: pwsh
+        run: |
+          $Version = cargo metadata `
+            --format-version 1 `
+            --no-deps |
+            ConvertFrom-Json |
+            Select-Object -ExpandProperty packages |
+            Select-Object -First 1 |
+            Select-Object -ExpandProperty version
+
+          "FRAMEBOLT_VERSION=$Version" >> $env:GITHUB_ENV
+
+      - name: Build Windows MSI
+        shell: pwsh
+        run: |
+          ./scripts/windows/package_windows_msi.ps1 -Architecture arm64
+
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-windows-msi-arm64
+          path: dist/*.msi
+          if-no-files-found: error
+
   build-macos-arm:
     name: Build & Package MacOS (arm64)
     runs-on: macos-26
@@ -1436,6 +1532,8 @@ jobs:
       - build-windows-installer-x64
       - build-windows-portable-arm64
       - build-windows-installer-arm64
+      - build-windows-msi-x64
+      - build-windows-msi-arm64
       - build-macos-arm
       - build-macos-intel
 
