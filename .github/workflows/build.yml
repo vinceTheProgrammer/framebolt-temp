@@ -475,7 +475,7 @@ jobs:
           if-no-files-found: error
   
   build-arch-x64:
-    name: Build & Package Arch
+    name: Build Arch binary (x86_64)
     runs-on: ubuntu-22.04
 
     steps:
@@ -531,7 +531,7 @@ jobs:
           if-no-files-found: error
 
   build-arch-arm64:
-    name: Build & Package Arch
+    name: Build Arch binary (aarch64)
     runs-on: ubuntu-22.04
 
     steps:
@@ -945,29 +945,19 @@ jobs:
       - name: Bundle GStreamer
         run: ./scripts/macos/bundle_gstreamer.sh
 
-      - name: Move .app to dist
+      - name: Get version
+        id: version
         run: |
-          mkdir -p dist
-          mv target/release/framebolt-desktop.app dist/framebolt.app
+          VERSION=$(cargo metadata --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["packages"][0]["version"])')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Package macOS app
-        shell: bash
         run: |
-          if [[ -d "release-artifacts/framebolt.app" ]]; then
-            echo "Packaging macOS app..."
+          mkdir -p dist
 
-            (
-              cd release-artifacts
-              ditto -c -k --sequesterRsrc --keepParent \
-                framebolt.app \
-                framebolt-macos-arm64.zip
-            )
-
-            rm -rf release-artifacts/framebolt.app
-          fi
-
-          echo "Release artifacts:"
-          find release-artifacts -type f -print
+          ditto -c -k --sequesterRsrc --keepParent \
+            target/release/framebolt-desktop.app \
+            "dist/framebolt-${VERSION}-macos-arm64.zip"
 
       - name: Upload MacOS .zip artifact
         uses: actions/upload-artifact@v7
@@ -1014,29 +1004,20 @@ jobs:
       - name: Bundle GStreamer
         run: ./scripts/macos/bundle_gstreamer.sh
 
-      - name: Move .app to dist
+      
+      - name: Get version
+        id: version
         run: |
-          mkdir -p dist
-          mv target/release/framebolt-desktop.app dist/framebolt.app
+          VERSION=$(cargo metadata --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["packages"][0]["version"])')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Package macOS app
-        shell: bash
         run: |
-          if [[ -d "release-artifacts/framebolt.app" ]]; then
-            echo "Packaging macOS app..."
+          mkdir -p dist
 
-            (
-              cd release-artifacts
-              ditto -c -k --sequesterRsrc --keepParent \
-                framebolt.app \
-                framebolt-macos-intel-x64.zip
-            )
-
-            rm -rf release-artifacts/framebolt.app
-          fi
-
-          echo "Release artifacts:"
-          find release-artifacts -type f -print
+          ditto -c -k --sequesterRsrc --keepParent \
+            target/release/framebolt-desktop.app \
+            "dist/framebolt-${VERSION}-macos-x64.zip"
 
       - name: Upload MacOS .zip artifact
         uses: actions/upload-artifact@v7
