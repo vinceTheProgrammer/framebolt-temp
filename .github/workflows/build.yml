@@ -963,7 +963,7 @@ jobs:
           Write-Host "Copying GStreamer runtime DLLs..."
 
           Copy-Item `
-            "$GStreamerRoot_ROOT\bin\*.dll" `
+            "$GStreamerRoot\bin\*.dll" `
             "$Stage" `
             -Force
 
@@ -973,7 +973,7 @@ jobs:
             "$Stage/lib/gstreamer-1.0" | Out-Null
 
           Copy-Item `
-            "$GStreamerRoot_ROOT/lib/gstreamer-1.0/*.dll" `
+            "$GStreamerRoot/lib/gstreamer-1.0/*.dll" `
             "$Stage/lib/gstreamer-1.0" `
             -Force
 
@@ -1076,7 +1076,7 @@ jobs:
           Write-Host "Copying GStreamer runtime DLLs..."
 
           Copy-Item `
-            "$GStreamerRoot_ROOT\bin\*.dll" `
+            "$GStreamerRoot\bin\*.dll" `
             "$Stage" `
             -Force
 
@@ -1086,7 +1086,7 @@ jobs:
             "$Stage/lib/gstreamer-1.0" | Out-Null
 
           Copy-Item `
-            "$GStreamerRoot_ROOT/lib/gstreamer-1.0/*.dll" `
+            "$GStreamerRoot/lib/gstreamer-1.0/*.dll" `
             "$Stage/lib/gstreamer-1.0" `
             -Force
 
