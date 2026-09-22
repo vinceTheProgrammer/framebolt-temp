@@ -77,12 +77,113 @@ cleanup() {
 
 trap cleanup EXIT
 
+canonical_path() {
+    local path="$1"
+
+    if [[ -e "$path" ]]; then
+        realpath "$path"
+    else
+        echo "$path"
+    fi
+}
+
 has_copied() {
-    grep -Fxq "$1" "$COPIED_LIBS_FILE" 2>/dev/null
+    local path="$1"
+    local canonical
+
+    canonical="$(canonical_path "$path")"
+
+    grep -Fxq "$canonical" "$COPIED_LIBS_FILE" 2>/dev/null
 }
 
 mark_copied() {
-    echo "$1" >> "$COPIED_LIBS_FILE"
+    local path="$1"
+    local canonical
+
+    canonical="$(canonical_path "$path")"
+
+    echo "$canonical" >> "$COPIED_LIBS_FILE"
+}
+
+# ---------------------------------------------------------------------------
+# Copy a dylib and recursively bundle its Homebrew dependencies
+# ---------------------------------------------------------------------------
+
+copy_dylib_recursive() {
+    local dylib_path="$1"
+
+    local resolved_path
+    resolved_path="$(resolve_dylib_path "$dylib_path")"
+
+    if [[ ! -f "$resolved_path" ]]; then
+        echo "  [warn] Dylib not found on disk: $resolved_path"
+        return
+    fi
+
+    # Normalize Homebrew opt/Cellar symlinks so the same library isn't
+    # processed twice through different paths.
+    local canonical_path_value
+    canonical_path_value="$(canonical_path "$resolved_path")"
+
+    if has_copied "$canonical_path_value"; then
+        echo "  [skip] Already copied: $resolved_path"
+        return
+    fi
+
+    mark_copied "$canonical_path_value"
+
+    local dylib_name
+    dylib_name="$(basename "$resolved_path")"
+
+    local destination
+    destination="$FRAMEWORKS_DIR/$dylib_name"
+
+    # The destination may already exist because another dependency reached
+    # the same dylib through a different Homebrew path.
+    if [[ -f "$destination" ]]; then
+        echo "  [skip] Already present: $destination"
+        return
+    fi
+
+    echo "  [copy] $resolved_path"
+    echo "       -> $destination"
+
+    cp -a "$resolved_path" "$destination"
+
+    echo "  [set-id] @rpath/$dylib_name"
+
+    install_name_tool \
+        -id "@rpath/$dylib_name" \
+        "$destination" || true
+
+    echo "  [deps] Inspecting $dylib_name..."
+
+    otool -L "$resolved_path" |
+        awk 'NR > 1 {print $1}' |
+        while read -r dep; do
+
+            [[ -z "$dep" ]] && continue
+
+            resolved_dep="$(resolve_dylib_path "$dep")"
+
+            if is_bundled_dependency "$resolved_dep"; then
+                dep_basename="$(basename "$resolved_dep")"
+
+                echo "     ↳ Bundling: $dep"
+                echo "        -> @rpath/$dep_basename"
+
+                install_name_tool \
+                    -change "$dep" \
+                    "@rpath/$dep_basename" \
+                    "$destination" || true
+
+                if [[ ! -f "$FRAMEWORKS_DIR/$dep_basename" ]]; then
+                    copy_dylib_recursive "$resolved_dep"
+                fi
+            else
+                echo "     ↳ System dependency: $dep"
+            fi
+        done
 }
 
 # ---------------------------------------------------------------------------
@@ -91,48 +192,51 @@ mark_copied() {
 
 resolve_dylib_path() {
     local dep="$1"
+    local candidate
 
-    # Already an absolute path.
-    if [[ "$dep" == /* && -f "$dep" ]]; then
-        echo "$dep"
-        return
-    fi
-
-    # @rpath/libfoo.dylib
     if [[ "$dep" == @rpath/* ]]; then
         local name="${dep#@rpath/}"
 
-        # Homebrew's normal lib directory.
         if [[ -f "$GST_PREFIX/lib/$name" ]]; then
-            echo "$GST_PREFIX/lib/$name"
+            realpath "$GST_PREFIX/lib/$name"
             return
         fi
 
-        # Also check the Homebrew Cellar dependency prefixes via brew.
-        #
-        # This is useful for GStreamer dependencies such as GLib, Soup,
-        # ORC, etc., which are separate Homebrew formulae.
-        local candidate
-        candidate="$(find "$(brew --prefix)" -path "*/lib/$name" -type f 2>/dev/null | head -n 1 || true)"
+        candidate="$(
+            find "$(brew --prefix)" \
+                -path "*/lib/$name" \
+                -type f \
+                2>/dev/null |
+                head -n 1 || true
+        )"
 
         if [[ -n "$candidate" && -f "$candidate" ]]; then
-            echo "$candidate"
+            realpath "$candidate"
             return
         fi
     fi
 
-    # Bare dylib name, e.g. libglib-2.0.0.dylib
+    if [[ "$dep" == /* && -f "$dep" ]]; then
+        realpath "$dep"
+        return
+    fi
+
     if [[ "$dep" != */* ]]; then
         if [[ -f "$GST_PREFIX/lib/$dep" ]]; then
-            echo "$GST_PREFIX/lib/$dep"
+            realpath "$GST_PREFIX/lib/$dep"
             return
         fi
 
-        local candidate
-        candidate="$(find "$(brew --prefix)" -path "*/lib/$dep" -type f 2>/dev/null | head -n 1 || true)"
+        candidate="$(
+            find "$(brew --prefix)" \
+                -path "*/lib/$dep" \
+                -type f \
+                2>/dev/null |
+                head -n 1 || true
+        )"
 
         if [[ -n "$candidate" && -f "$candidate" ]]; then
-            echo "$candidate"
+            realpath "$candidate"
             return
         fi
     fi
