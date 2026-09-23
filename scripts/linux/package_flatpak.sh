@@ -32,14 +32,14 @@ modules:
     buildsystem: simple
     build-commands:
       - install -Dm755 framebolt /app/bin/framebolt
-      - install -Dm644 framebolt.png /app/share/icons/hicolor/96x96/apps/framebolt.png
+      - install -Dm644 res/icons/framebolt.png /app/share/icons/hicolor/96x96/apps/framebolt.png
       - install -Dm644 ${APP_ID}.desktop /app/share/applications/${APP_ID}.desktop
     sources:
       - type: file
         path: ../target/release/framebolt-desktop
         dest-filename: framebolt
       - type: file
-        path: ../framebolt.png
+        path: ../res/icons/framebolt.png
       - type: file
         path: ${APP_ID}.desktop
 EOF

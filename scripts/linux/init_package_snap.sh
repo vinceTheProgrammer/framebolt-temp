@@ -23,7 +23,7 @@ Type=Application
 Categories=AudioVideo;
 EOF
 
-cp framebolt.png \
+cp res/icons/framebolt.png \
     "snap/gui/framebolt.png"
 
 cat > snap/snapcraft.yaml <<EOF

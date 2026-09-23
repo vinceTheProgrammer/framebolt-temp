@@ -103,7 +103,7 @@ Write-Host "  $($Wix.Source)"
 # Optional application icon
 # ------------------------------------------------------------
 
-$IconFile = Join-Path $Root "framebolt.ico"
+$IconFile = Join-Path $Root "res/icons/framebolt.ico"
 
 $IconXml = ""
 

@@ -26,7 +26,7 @@ mkdir -p \
 cp target/release/framebolt-desktop \
     rpm/SOURCES/usr/bin/framebolt
 
-cp framebolt.png \
+cp res/icons/framebolt.png \
     rpm/SOURCES/usr/share/icons/hicolor/96x96/apps/framebolt.png
 
 cat > rpm/SOURCES/usr/share/applications/framebolt.desktop <<'EOF'

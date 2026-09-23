@@ -207,7 +207,7 @@ Type=Application
 Categories=AudioVideo;
 EOF
 
-    cp framebolt.png "$dir/framebolt.png"
+    cp res/icons/framebolt.png "$dir/framebolt.png"
 }
 
 generate_srcinfo() {
@@ -289,11 +289,11 @@ package() {
         "\${pkgdir}/usr/bin/framebolt"
 
     install -Dm644 \
-        "\${srcdir}/framebolt.desktop" \
+        "\${srcdir}/res/meta/aur.desktop" \
         "\${pkgdir}/usr/share/applications/framebolt.desktop"
 
     install -Dm644 \
-        "\${srcdir}/framebolt.png" \
+        "\${srcdir}/res/icons/framebolt.png" \
         "\${pkgdir}/usr/share/icons/hicolor/96x96/apps/framebolt.png"
 
     if [[ -f LICENSE ]]; then
@@ -391,11 +391,11 @@ package() {
         "\${pkgdir}/usr/bin/framebolt"
 
     install -Dm644 \
-        "\${srcdir}/framebolt.desktop" \
+        "\${srcdir}/res/meta/aur.desktop" \
         "\${pkgdir}/usr/share/applications/framebolt.desktop"
 
     install -Dm644 \
-        "\${srcdir}/framebolt.png" \
+        "\${srcdir}/res/icons/framebolt.png" \
         "\${pkgdir}/usr/share/icons/hicolor/96x96/apps/framebolt.png"
 }
 EOF
@@ -473,11 +473,11 @@ package() {
         "\${pkgdir}/usr/bin/framebolt"
 
     install -Dm644 \
-        "\${srcdir}/framebolt.desktop" \
+        "\${srcdir}/res/meta/aur.desktop" \
         "\${pkgdir}/usr/share/applications/framebolt.desktop"
 
     install -Dm644 \
-        "\${srcdir}/framebolt.png" \
+        "\${srcdir}/res/icons/framebolt.png" \
         "\${pkgdir}/usr/share/icons/hicolor/96x96/apps/framebolt.png"
 
     if [[ -f LICENSE ]]; then

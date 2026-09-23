@@ -17,7 +17,7 @@ mkdir -p deb/usr/share/icons/hicolor/96x96/apps
 cp target/release/framebolt-desktop \
     deb/usr/bin/framebolt
 
-cp framebolt.png \
+cp res/icons/framebolt.png \
     deb/usr/share/icons/hicolor/96x96/apps/framebolt.png
 
 cat > deb/usr/share/applications/framebolt.desktop <<'EOF'

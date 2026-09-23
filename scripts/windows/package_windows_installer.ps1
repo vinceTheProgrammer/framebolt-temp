@@ -61,7 +61,7 @@ switch ($Architecture) {
 
 $IconDirective = ""
 
-$IconFile = Join-Path $Root "framebolt.ico"
+$IconFile = Join-Path $Root "res/icons/framebolt.ico"
 
 if (Test-Path $IconFile) {
     Copy-Item `

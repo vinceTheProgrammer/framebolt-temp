@@ -37,7 +37,7 @@ linuxdeploy \
     --executable ../AppDir/usr/bin/framebolt \
     --output appimage \
     --create-desktop-file \
-    --icon-file ../framebolt.png
+    --icon-file ../res/icons/framebolt.png
 
 cd ..
 
