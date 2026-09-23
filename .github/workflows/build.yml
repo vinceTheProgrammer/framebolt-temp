@@ -36,7 +36,7 @@ jobs:
 
       - name: Build Framebolt
         run: |
-          cargo build \
+          cargo build --bin framebolt \
             --release
 
       - name: Package Debian
@@ -75,7 +75,7 @@ jobs:
 
       - name: Build Framebolt
         run: |
-          cargo build \
+          cargo build --bin framebolt \
             --release
 
       - name: Package Debian
@@ -144,7 +144,7 @@ jobs:
 
               echo "==> Building Framebolt"
 
-              cargo build \
+              cargo build --bin framebolt \
                 --release
 
               test -x target/release/framebolt-desktop
@@ -218,7 +218,7 @@ jobs:
 
               echo "==> Building Framebolt"
 
-              cargo build \
+              cargo build --bin framebolt \
                 --release
 
               test -x target/release/framebolt-desktop
@@ -298,7 +298,7 @@ jobs:
 
               echo "==> Building Framebolt"
 
-              cargo build \
+              cargo build --bin framebolt \
                 --release
 
               test -x target/release/framebolt-desktop
@@ -374,7 +374,7 @@ jobs:
 
               echo "==> Building Framebolt"
 
-              cargo build \
+              cargo build --bin framebolt \
                 --release
 
               test -x target/release/framebolt-desktop
@@ -467,7 +467,7 @@ jobs:
 
               echo "==> Building Framebolt"
 
-              cargo build \
+              cargo build --bin framebolt \
                 --release
 
               test -x target/release/framebolt-desktop
@@ -568,7 +568,7 @@ jobs:
 
               echo "==> Building Framebolt"
 
-              cargo build \
+              cargo build --bin framebolt \
                 --release
 
               test -x target/release/framebolt-desktop
@@ -644,7 +644,7 @@ jobs:
 
       - name: Build Framebolt
         run: |
-          cargo build \
+          cargo build --bin framebolt \
             --release
           
       - name: Package Flatpak
@@ -692,7 +692,7 @@ jobs:
 
       - name: Build Framebolt
         run: |
-          cargo build \
+          cargo build --bin framebolt \
             --release
           
       - name: Package Flatpak
@@ -801,7 +801,7 @@ jobs:
 
               source "$HOME/.cargo/env"
 
-              cargo build \
+              cargo build --bin framebolt \
                 --release
 
               mkdir -p dist
@@ -856,7 +856,7 @@ jobs:
 
               source "$HOME/.cargo/env"
 
-              cargo build \
+              cargo build --bin framebolt \
                 --release
 
               mkdir -p dist
@@ -921,7 +921,7 @@ jobs:
       - name: Build Framebolt
         shell: pwsh
         run: |
-          cargo build `
+          cargo build --bin framebolt `
             --release `
             --locked
 
@@ -1033,7 +1033,7 @@ jobs:
       - name: Build Framebolt
         shell: pwsh
         run: |
-          cargo build `
+          cargo build --bin framebolt `
             --release `
             --locked
 
@@ -1395,7 +1395,7 @@ jobs:
 
       - name: Build Framebolt aarch64
         run: |
-          cargo build \
+          cargo build --bin framebolt \
             --release \
             --target aarch64-apple-darwin
 
@@ -1453,7 +1453,7 @@ jobs:
 
       - name: Build Framebolt aarch64
         run: |
-          cargo build \
+          cargo build --bin framebolt \
             --release \
             --target x86_64-apple-darwin
 
