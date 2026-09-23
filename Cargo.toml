@@ -73,7 +73,7 @@ members = [
 
 [workspace.package]
 edition = "2024"
-version = "0.1.15"
+version = "0.1.16"
 
 [workspace.dependencies]
 framebolt-core = { path = "crates/framebolt-core" }
