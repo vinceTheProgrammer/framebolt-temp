@@ -57,21 +57,33 @@ jobs:
     uses: ./.github/workflows/build-windows-arm64.yml
 
   build-windows-portable-x64:
+    needs:
+          - build-windows-x64
     uses: ./.github/workflows/build-windows-portable-x64.yml
 
   build-windows-portable-arm64:
+    needs:
+          - build-windows-arm64
     uses: ./.github/workflows/build-windows-portable-arm64.yml
 
   build-windows-installer-x64:
+    needs:
+          - build-windows-x64
     uses: ./.github/workflows/build-windows-installer-x64.yml
 
   build-windows-installer-arm64:
+    needs:
+          - build-windows-arm64
     uses: ./.github/workflows/build-windows-installer-arm64.yml
 
   build-windows-msi-x64:
+    needs:
+        - build-windows-x64
     uses: ./.github/workflows/build-windows-msi-x64.yml
 
   build-windows-msi-arm64:
+    needs:
+        - build-windows-arm64
     uses: ./.github/workflows/build-windows-msi-arm64.yml
 
   build-macos-arm:

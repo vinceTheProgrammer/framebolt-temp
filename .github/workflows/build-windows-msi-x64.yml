@@ -6,9 +6,6 @@ jobs:
     name: Build Windows MSI (x86_64)
     runs-on: windows-2025
 
-    needs:
-      - build-windows-x64
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
