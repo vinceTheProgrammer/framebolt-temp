@@ -2,7 +2,7 @@ on:
   workflow_call:
 
 jobs:
-  deb-arm64-build:
+  build-deb-arm64:
       name: Build & Package Debian (arm64)
       runs-on: ubuntu-22.04-arm
 

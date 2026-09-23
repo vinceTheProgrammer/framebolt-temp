@@ -8,11 +8,11 @@ on:
   pull_request:
 
 jobs:
-  deb-x64-build:
-    uses: ./.github/workflows/deb_x64_build.yml
+  build-deb-x64:
+    uses: ./.github/workflows/build-deb-x64.yml
 
-  deb-arm64-build:
-    uses: ./.github/workflows/deb_arm64_build.yml
+  build-deb-arm64:
+    uses: ./.github/workflows/build-deb-arm64.yml
 
 
   # ------------------------------------------------------------
