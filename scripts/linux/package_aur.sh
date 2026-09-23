@@ -278,8 +278,7 @@ build() {
 
     cargo build \
         --release \
-        --locked \
-        -p framebolt-desktop
+        --locked
 }
 
 package() {
@@ -463,8 +462,7 @@ build() {
 
     cargo build \
         --release \
-        --locked \
-        -p framebolt-desktop
+        --locked
 }
 
 package() {

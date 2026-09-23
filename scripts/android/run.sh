@@ -17,8 +17,6 @@ export AR_aarch64_linux_android=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/
 export CC_armv7_linux_androideabi=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi23-clang
 export AR_armv7_linux_androideabi=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
 
-cd apps/mobile
-
 rustup target add armv7-linux-androideabi
 rustup target add aarch64-linux-android
 rustup target add i686-linux-android

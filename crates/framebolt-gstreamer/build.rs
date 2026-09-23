@@ -5,9 +5,9 @@ fn main() {
 
     if target.contains("android") {
         let abi = if target.contains("aarch64") {
-            "arm64"
+            "arm64-v8a"
         } else if target.contains("armv7") {
-            "armv7"
+            "armeabi-v7a"
         } else if target.contains("x86_64") {
             "x86_64"
         } else {
@@ -23,7 +23,7 @@ fn main() {
             .to_path_buf();
 
         let lib_dir = workspace_root
-            .join("apps/mobile/android/libs")
+            .join("res/android/libs")
             .join(abi);
 
         println!("cargo:rustc-link-search=native={}", lib_dir.display());

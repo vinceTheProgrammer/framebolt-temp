@@ -9,8 +9,8 @@ arm64-v8a
 armeabi-v7a
 armv7
 arm64
-apps/mobile/android/gstreamer
-apps/mobile/android/libs
+res/android/gstreamer
+res/android/libs
 AppDir/
 deb/
 *.AppImage

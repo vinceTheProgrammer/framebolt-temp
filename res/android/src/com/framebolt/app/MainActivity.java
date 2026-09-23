@@ -13,13 +13,12 @@ import android.os.Handler;
 public class MainActivity extends NativeActivity {
 
     static {
-        System.loadLibrary("framebolt_mobile");
+        System.loadLibrary("framebolt");
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i("framebolt", "hello there");
         setImmersiveMode();
         Handler handler = new Handler(Looper.getMainLooper());
         handler.postDelayed(new Runnable() {
@@ -66,7 +65,6 @@ public class MainActivity extends NativeActivity {
 
             decorView.setSystemUiVisibility(flags);
 
-            // 🔥 Reapply if visibility changes (old API)
             decorView.setOnSystemUiVisibilityChangeListener(visibility -> {
                 if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
                     decorView.setSystemUiVisibility(flags);

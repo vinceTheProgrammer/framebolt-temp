@@ -37,7 +37,6 @@ jobs:
       - name: Build Framebolt
         run: |
           cargo build \
-            -p framebolt-desktop \
             --release
 
       - name: Package Debian
@@ -77,7 +76,6 @@ jobs:
       - name: Build Framebolt
         run: |
           cargo build \
-            -p framebolt-desktop \
             --release
 
       - name: Package Debian
@@ -147,7 +145,6 @@ jobs:
               echo "==> Building Framebolt"
 
               cargo build \
-                -p framebolt-desktop \
                 --release
 
               test -x target/release/framebolt-desktop
@@ -222,7 +219,6 @@ jobs:
               echo "==> Building Framebolt"
 
               cargo build \
-                -p framebolt-desktop \
                 --release
 
               test -x target/release/framebolt-desktop
@@ -303,7 +299,6 @@ jobs:
               echo "==> Building Framebolt"
 
               cargo build \
-                -p framebolt-desktop \
                 --release
 
               test -x target/release/framebolt-desktop
@@ -380,7 +375,6 @@ jobs:
               echo "==> Building Framebolt"
 
               cargo build \
-                -p framebolt-desktop \
                 --release
 
               test -x target/release/framebolt-desktop
@@ -474,7 +468,6 @@ jobs:
               echo "==> Building Framebolt"
 
               cargo build \
-                -p framebolt-desktop \
                 --release
 
               test -x target/release/framebolt-desktop
@@ -576,7 +569,6 @@ jobs:
               echo "==> Building Framebolt"
 
               cargo build \
-                -p framebolt-desktop \
                 --release
 
               test -x target/release/framebolt-desktop
@@ -653,7 +645,6 @@ jobs:
       - name: Build Framebolt
         run: |
           cargo build \
-            -p framebolt-desktop \
             --release
           
       - name: Package Flatpak
@@ -702,7 +693,6 @@ jobs:
       - name: Build Framebolt
         run: |
           cargo build \
-            -p framebolt-desktop \
             --release
           
       - name: Package Flatpak
@@ -812,7 +802,6 @@ jobs:
               source "$HOME/.cargo/env"
 
               cargo build \
-                -p framebolt-desktop \
                 --release
 
               mkdir -p dist
@@ -868,7 +857,6 @@ jobs:
               source "$HOME/.cargo/env"
 
               cargo build \
-                -p framebolt-desktop \
                 --release
 
               mkdir -p dist
@@ -935,8 +923,7 @@ jobs:
         run: |
           cargo build `
             --release `
-            --locked `
-            -p framebolt-desktop
+            --locked
 
       - name: Prepare Windows staging directory
         shell: pwsh
@@ -1048,8 +1035,7 @@ jobs:
         run: |
           cargo build `
             --release `
-            --locked `
-            -p framebolt-desktop
+            --locked
 
       - name: Prepare Windows staging directory
         shell: pwsh
@@ -1410,7 +1396,6 @@ jobs:
       - name: Build Framebolt aarch64
         run: |
           cargo build \
-            -p framebolt-desktop \
             --release \
             --target aarch64-apple-darwin
 
@@ -1469,7 +1454,6 @@ jobs:
       - name: Build Framebolt aarch64
         run: |
           cargo build \
-            -p framebolt-desktop \
             --release \
             --target x86_64-apple-darwin
 
@@ -1614,7 +1598,7 @@ jobs:
           import re
           from pathlib import Path
 
-          path = Path("apps/mobile/Cargo.toml")
+          path = Path("Cargo.toml")
           text = path.read_text()
 
           target = os.environ["TARGET"]
@@ -1642,7 +1626,7 @@ jobs:
           if count != 1:
               raise SystemExit(
                   "Could not find package.metadata.android.build_targets "
-                  "in apps/mobile/Cargo.toml"
+                  "in Cargo.toml"
               )
 
           path.write_text(updated)
@@ -1651,7 +1635,7 @@ jobs:
           PY
 
           echo "Updated build_targets:"
-          grep -A5 -B1 'build_targets' apps/mobile/Cargo.toml
+          grep -A5 -B1 'build_targets' Cargo.toml
 
       - name: Build Android debug APK
         shell: bash
@@ -1779,7 +1763,7 @@ jobs:
           from pathlib import Path
           import re
 
-          path = Path("apps/mobile/Cargo.toml")
+          path = Path("Cargo.toml")
           text = path.read_text()
 
           replacement = """build_targets = [
@@ -1801,7 +1785,7 @@ jobs:
           if count != 1:
               raise SystemExit(
                   "Could not find package.metadata.android.build_targets "
-                  "in apps/mobile/Cargo.toml"
+                  "in Cargo.toml"
               )
 
           path.write_text(updated)

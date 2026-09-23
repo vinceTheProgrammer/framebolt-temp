@@ -10,13 +10,13 @@ All instructions below assume your current directory is the root of the project.
 ## Quickstart
 ### Run (debug)
 ```
-cargo run -p framebolt-desktop
+cargo run
 ```
 *Add `--release` to run the release version*
 
 ### Build (debug)
 ```
-cargo build -p framebolt-desktop
+cargo build
 ```
 *Add `--release` to run the release version*
 
@@ -26,7 +26,7 @@ cargo build -p framebolt-desktop
 1. Ensure `linuxdeploy` is installed
 #### Build
 ```
-cargo build -p framebolt-desktop --release
+cargo build --release
 ./scripts/linux/package_appimage.sh
 ```
 
@@ -36,7 +36,7 @@ cargo build -p framebolt-desktop --release
 2. Ensure `dpkg-deb` is installed
 #### Build
 ```
-cargo build -p framebolt-desktop --release
+cargo build --release
 ./scripts/linux/package_deb.sh
 ```
 useful for testing:
@@ -91,7 +91,7 @@ cargo install cargo-apk2
 ```
 
 ### Build (debug)
-Specify what architectures the apk will support by setting `package.metadata.android.build_targets` in `apps/mobile/Cargo.toml` accordingly. Every included target will be included in the built apk.
+Specify what architectures the apk will support by setting `package.metadata.android.build_targets` in `Cargo.toml` accordingly. Every included target will be included in the built apk.
 ```
 # Specifies the array of targets to build for.
 build_targets = [ 
@@ -119,3 +119,36 @@ build_targets = [
 
 ## iOS
 Not yet supported
+
+
+
+
+# Draft explanation of project structure:
+
+- `.cargo/config.toml` - don't remember for sure, but I think I may have at one poiont determined that it was needed to build for Android, at least on my system. Maybe it's not needed for CI. I should probably test that at some point.
+
+- `.github/workflows/build.yml` - the FATASS of a github action that builds Framebolt for every platform under the sun
+
+- `assets` - holds things that should be packaged inside of the app
+
+- `crates` - subprojects of Framebolt to make it easier to reason about things
+
+- `crates/framebolt-canvas` - the heart of Framebolt. Handles everything related to rendering graphics to the canvas
+
+- `crates/framebolt-core` - the brain of Framebolt. Holds all essential core state and functionality
+
+- `crates/framebolt-egui` - the face of Framebolt. Holds all gui related code
+
+- `crates/framebolt-gstreamer` - interface between `crates/media` and gstreamer
+
+- `crates/framebolt-media` - takes media related queries and talks with other tools to make it happen. e.g. framebolt-core may request from `crates/media` that a video be rendered, and then `crates/media` will ask gstreamer to render it. This layer between gstreamer and the rest of framebolt could useful for if I ever need to switch out gstreamer or add other media related libraries
+
+- `crates/framebolt-plugin-api` - defines a plugin api for Framebolt plugins to interface with
+
+- `crates/framebolt-plugins` - default plugins to be baked into the app (e.g. basic drawing tools)
+
+- `res` - resources needed when building Framebolt
+
+- `scripts` - scripts to make building Framebolt easier (tested mostly for ci, but in theory most should work locally too)
+
+- `src` - framebolt entry point code. for each platform, initialize eframe, egui, core, etc.

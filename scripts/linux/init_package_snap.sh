@@ -87,8 +87,7 @@ parts:
         https://sh.rustup.rs | sh -s -- -y --profile minimal
 
       cargo build \
-        --release \
-        -p framebolt-desktop
+        --release
 
       install -Dm755 \
         target/release/framebolt-desktop \

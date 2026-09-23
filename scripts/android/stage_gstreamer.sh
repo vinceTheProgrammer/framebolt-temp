@@ -7,7 +7,7 @@ cd gstreamer-android-runtime
 # for abi in armeabi-v7a arm64-v8a x86 x86_64; do
 for abi in armv7 arm64 x86 x86_64; do
   SRC="./${abi}/lib"
-  BASE="../apps/mobile/android/libs"
+  BASE="../res/android/libs"
   DST="${BASE}/${abi}"
 
   mkdir -p "$DST"
@@ -30,7 +30,7 @@ cd ../gstreamer-android
 # mv armv7 armeabi-v7a || true
 # mv arm64 arm64-v8a || true
 
-HEADERS_DST="../apps/mobile/android/gstreamer"
+HEADERS_DST="../res/android/gstreamer"
 HEADERS_SRC="./arm64"
 
 echo "Copying include headers..."

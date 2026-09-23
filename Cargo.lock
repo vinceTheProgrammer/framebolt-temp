@@ -1722,6 +1722,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "framebolt"
+version = "0.1.15"
+dependencies = [
+ "cargo-apk2",
+ "eframe",
+ "egui_dock",
+ "framebolt-core",
+ "framebolt-egui",
+ "glam",
+ "jni 0.21.1",
+ "wasmtime",
+ "wgpu",
+ "winit",
+]
+
+[[package]]
 name = "framebolt-canvas"
 version = "0.1.15"
 dependencies = [
@@ -1738,16 +1754,6 @@ dependencies = [
  "proptest",
  "rustc_version_runtime",
  "wasmtime",
-]
-
-[[package]]
-name = "framebolt-desktop"
-version = "0.1.15"
-dependencies = [
- "eframe",
- "egui_dock",
- "framebolt-core",
- "framebolt-egui",
 ]
 
 [[package]]
@@ -1774,18 +1780,6 @@ dependencies = [
 [[package]]
 name = "framebolt-media"
 version = "0.1.15"
-
-[[package]]
-name = "framebolt-mobile"
-version = "0.1.15"
-dependencies = [
- "cargo-apk2",
- "eframe",
- "framebolt-core",
- "framebolt-egui",
- "jni 0.21.1",
- "winit",
-]
 
 [[package]]
 name = "futures"
