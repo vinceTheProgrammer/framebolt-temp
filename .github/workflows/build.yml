@@ -147,7 +147,7 @@ jobs:
               cargo build --bin framebolt \
                 --release
 
-              test -x target/release/framebolt-desktop
+              test -x target/release/framebolt
 
               echo "==> Packaging Fedora RPM"
 
@@ -221,7 +221,7 @@ jobs:
               cargo build --bin framebolt \
                 --release
 
-              test -x target/release/framebolt-desktop
+              test -x target/release/framebolt
 
               echo "==> Packaging Fedora RPM"
 
@@ -301,7 +301,7 @@ jobs:
               cargo build --bin framebolt \
                 --release
 
-              test -x target/release/framebolt-desktop
+              test -x target/release/framebolt
 
               echo "==> Packaging openSUSE RPM"
 
@@ -377,7 +377,7 @@ jobs:
               cargo build --bin framebolt \
                 --release
 
-              test -x target/release/framebolt-desktop
+              test -x target/release/framebolt
 
               echo "==> Packaging openSUSE RPM"
 
@@ -470,7 +470,7 @@ jobs:
               cargo build --bin framebolt \
                 --release
 
-              test -x target/release/framebolt-desktop
+              test -x target/release/framebolt
 
               echo "==> Installing linuxdeploy"
 
@@ -571,7 +571,7 @@ jobs:
               cargo build --bin framebolt \
                 --release
 
-              test -x target/release/framebolt-desktop
+              test -x target/release/framebolt
 
               echo "==> Installing linuxdeploy"
 
@@ -807,7 +807,7 @@ jobs:
               mkdir -p dist
 
               install -Dm755 \
-                target/release/framebolt-desktop \
+                target/release/framebolt \
                 dist/framebolt-x86_64
             '
 
@@ -862,7 +862,7 @@ jobs:
               mkdir -p dist
 
               install -Dm755 \
-                target/release/framebolt-desktop \
+                target/release/framebolt \
                 dist/framebolt-arm64
             '
 
@@ -944,7 +944,7 @@ jobs:
             $Stage | Out-Null
 
           Copy-Item `
-            "target/release/framebolt-desktop.exe" `
+            "target/release/framebolt.exe" `
             "$Stage/framebolt.exe"
 
           Write-Host "Copying GStreamer runtime DLLs..."
@@ -1056,7 +1056,7 @@ jobs:
             $Stage | Out-Null
 
           Copy-Item `
-            "target/release/framebolt-desktop.exe" `
+            "target/release/framebolt.exe" `
             "$Stage/framebolt.exe"
 
           Write-Host "Copying GStreamer runtime DLLs..."
@@ -1401,14 +1401,14 @@ jobs:
 
       - name: Create macOS app bundle
         run: |
-          APP="target/release/framebolt-desktop.app"
+          APP="target/release/framebolt.app"
 
           mkdir -p "$APP/Contents/MacOS"
           mkdir -p "$APP/Contents/Resources"
 
           cp \
-            "target/aarch64-apple-darwin/release/framebolt-desktop" \
-            "$APP/Contents/MacOS/framebolt-desktop"
+            "target/aarch64-apple-darwin/release/framebolt" \
+            "$APP/Contents/MacOS/framebolt"
 
       - name: Bundle GStreamer
         run: ./scripts/macos/bundle_gstreamer.sh
@@ -1424,7 +1424,7 @@ jobs:
           mkdir -p dist
 
           ditto -c -k --sequesterRsrc --keepParent \
-            target/release/framebolt-desktop.app \
+            target/release/framebolt.app \
             "dist/framebolt-${VERSION}-macos-arm64.zip"
 
       - name: Upload MacOS .zip artifact
@@ -1459,14 +1459,14 @@ jobs:
 
       - name: Create macOS app bundle
         run: |
-          APP="target/release/framebolt-desktop.app"
+          APP="target/release/framebolt.app"
 
           mkdir -p "$APP/Contents/MacOS"
           mkdir -p "$APP/Contents/Resources"
 
           cp \
-            "target/x86_64-apple-darwin/release/framebolt-desktop" \
-            "$APP/Contents/MacOS/framebolt-desktop"
+            "target/x86_64-apple-darwin/release/framebolt" \
+            "$APP/Contents/MacOS/framebolt"
 
       - name: Bundle GStreamer
         run: ./scripts/macos/bundle_gstreamer.sh
@@ -1483,7 +1483,7 @@ jobs:
           mkdir -p dist
 
           ditto -c -k --sequesterRsrc --keepParent \
-            target/release/framebolt-desktop.app \
+            target/release/framebolt.app \
             "dist/framebolt-${VERSION}-macos-x64.zip"
 
       - name: Upload MacOS .zip artifact
