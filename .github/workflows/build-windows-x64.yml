@@ -1,0 +1,115 @@
+on:
+  workflow_call:
+
+jobs:
+  build-windows-x64:
+    name: Build Windows (x86_64)
+    runs-on: windows-2025
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          target: x86_64-pc-windows-msvc
+
+      - name: Install GStreamer
+        shell: pwsh
+        run: |
+          ./scripts/windows/install_gstreamer.ps1 -Architecture x86_64
+
+      - name: Verify GStreamer
+        shell: pwsh
+        run: |
+          $GStreamerRoot = "C:\gstreamer"
+          ./scripts/windows/verify_gstreamer.ps1
+
+      - name: Get version
+        id: version
+        shell: pwsh
+        run: |
+          $Version = cargo metadata `
+            --format-version 1 `
+            --no-deps |
+            ConvertFrom-Json |
+            Select-Object -ExpandProperty packages |
+            Select-Object -First 1 |
+            Select-Object -ExpandProperty version
+
+          "version=$Version" >> $env:GITHUB_OUTPUT
+          "FRAMEBOLT_VERSION=$Version" >> $env:GITHUB_ENV
+
+      - name: Build Framebolt
+        shell: pwsh
+        run: |
+          cargo build --bin framebolt `
+            --release `
+            --locked
+
+      - name: Prepare Windows staging directory
+        shell: pwsh
+        run: |
+          $GStreamerRoot = "C:\gstreamer"
+          $ErrorActionPreference = "Stop"
+          $Stage = "dist/windows-staging"
+
+          Remove-Item `
+            -Recurse `
+            -Force `
+            -ErrorAction SilentlyContinue `
+            $Stage
+
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            $Stage | Out-Null
+
+          Copy-Item `
+            "target/release/framebolt.exe" `
+            "$Stage/framebolt.exe"
+
+          Write-Host "Copying GStreamer runtime DLLs..."
+
+          Copy-Item `
+            "$GStreamerRoot\bin\*.dll" `
+            "$Stage" `
+            -Force
+
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            "$Stage/lib/gstreamer-1.0" | Out-Null
+
+          Copy-Item `
+            "$GStreamerRoot/lib/gstreamer-1.0/*.dll" `
+            "$Stage/lib/gstreamer-1.0" `
+            -Force
+
+          Write-Host "Windows staging contents:"
+
+          Get-ChildItem `
+            $Stage `
+            -Recurse |
+            Select-Object FullName, Length
+
+      - name: Verify Windows binary
+        shell: pwsh
+        run: |
+          $Binary = "dist/windows-staging/framebolt.exe"
+
+          if (-not (Test-Path $Binary)) {
+            throw "Windows binary was not created."
+          }
+
+          Get-Item $Binary |
+            Format-List Name, Length, FullName
+
+      - name: Upload Windows staging artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-windows-staging-x86_64
+          path: dist/windows-staging/
+          if-no-files-found: error

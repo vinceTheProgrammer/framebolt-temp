@@ -1,0 +1,77 @@
+on:
+  workflow_call:
+
+jobs:
+  build-rpm-fedora-arm64:
+    name: Build & Package Fedora RPM (arm64)
+    runs-on: ubuntu-22.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build RPM - Fedora
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            fedora:44 \
+            bash -c '
+              set -euo pipefail
+
+              echo "==> Installing Fedora dependencies"
+
+              dnf install -y \
+                curl \
+                gcc \
+                gcc-c++ \
+                make \
+                pkg-config \
+                python3 \
+                rpm-build \
+                tar \
+                gzip \
+                gstreamer1 \
+                gstreamer1-devel \
+                gstreamer1-plugins-base \
+                gstreamer1-plugins-base-devel
+
+              echo "==> Installing Rust"
+
+              curl --proto "=https" \
+                --tlsv1.2 \
+                -sSf \
+                https://sh.rustup.rs \
+                | sh -s -- -y
+
+              source "$HOME/.cargo/env"
+
+              echo "==> Toolchain"
+
+              rustc --version
+              cargo --version
+
+              echo "==> Building Framebolt"
+
+              cargo build --bin framebolt \
+                --release
+
+              test -x target/release/framebolt
+
+              echo "==> Packaging Fedora RPM"
+
+              ./scripts/linux/package_rpm_fedora.sh
+
+              echo "==> RPM output"
+
+              ls -lah dist/
+
+              test -n "$(find dist -maxdepth 1 -name "*.rpm" -print -quit)"
+            '
+
+      - name: Upload Fedora RPM artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-rpm-fedora-arm64
+          path: dist/*.rpm
+          if-no-files-found: error

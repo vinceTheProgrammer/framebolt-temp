@@ -1,0 +1,50 @@
+on:
+  workflow_call:
+
+jobs:
+  build-windows-installer-arm64:
+    name: Build Windows Installer (arm64)
+    runs-on: windows-11-arm
+
+    needs:
+      - build-windows-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Windows staging
+        uses: actions/download-artifact@v8
+        with:
+          name: framebolt-windows-staging-arm64
+          path: dist/windows-staging
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress --yes
+
+      - name: Get version
+        shell: pwsh
+        run: |
+          $Version = cargo metadata `
+            --format-version 1 `
+            --no-deps |
+            ConvertFrom-Json |
+            Select-Object -ExpandProperty packages |
+            Select-Object -First 1 |
+            Select-Object -ExpandProperty version
+
+          "FRAMEBOLT_VERSION=$Version" >> $env:GITHUB_ENV
+
+      - name: Package Windows installer
+        shell: pwsh
+        run: |
+          ./scripts/windows/package_windows_installer.ps1 -Architecture arm64
+
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-windows-installer-arm64
+          path: dist/*.exe
+          if-no-files-found: error

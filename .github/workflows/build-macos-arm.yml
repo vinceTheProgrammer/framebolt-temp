@@ -1,0 +1,61 @@
+on:
+  workflow_call:
+
+jobs:
+  build-macos-arm:
+    name: Build & Package MacOS (arm64)
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install GStreamer
+        run: brew install gstreamer
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          target: aarch64-apple-darwin
+
+      - name: Build Framebolt aarch64
+        run: |
+          cargo build --bin framebolt \
+            --release \
+            --target aarch64-apple-darwin
+
+      - name: Create macOS app bundle
+        run: |
+          APP="target/release/framebolt.app"
+
+          mkdir -p "$APP/Contents/MacOS"
+          mkdir -p "$APP/Contents/Resources"
+
+          cp \
+            "target/aarch64-apple-darwin/release/framebolt" \
+            "$APP/Contents/MacOS/framebolt"
+
+      - name: Bundle GStreamer
+        run: ./scripts/macos/bundle_gstreamer.sh
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(cargo metadata --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["packages"][0]["version"])')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Package macOS app
+        run: |
+          mkdir -p dist
+
+          ditto -c -k --sequesterRsrc --keepParent \
+            target/release/framebolt.app \
+            "dist/framebolt-${VERSION}-macos-arm64.zip"
+
+      - name: Upload MacOS .zip artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-macos-arm
+          path: dist/*.zip
+          if-no-files-found: error

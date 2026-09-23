@@ -1,0 +1,45 @@
+on:
+  workflow_call:
+
+jobs:
+  build-windows-portable-x64:
+    name: Build Windows Portable (x86_64)
+    runs-on: windows-2025
+
+    needs:
+      - build-windows-x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Windows staging
+        uses: actions/download-artifact@v8
+        with:
+          name: framebolt-windows-staging-x86_64
+          path: dist/windows-staging
+
+      - name: Get version
+        shell: pwsh
+        run: |
+          $Version = cargo metadata `
+            --format-version 1 `
+            --no-deps |
+            ConvertFrom-Json |
+            Select-Object -ExpandProperty packages |
+            Select-Object -First 1 |
+            Select-Object -ExpandProperty version
+
+          "FRAMEBOLT_VERSION=$Version" >> $env:GITHUB_ENV
+
+      - name: Package portable ZIP
+        shell: pwsh
+        run: |
+          ./scripts/windows/package_windows_portable.ps1 -Architecture x86_64
+
+      - name: Upload Windows portable artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-windows-portable-x64
+          path: dist/*.zip
+          if-no-files-found: error

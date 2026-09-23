@@ -55,17 +55,6 @@ apt install -y /pkg/framebolt_0.1.0_amd64.deb
 
 
 # Mobile
-## Mobile UI on Desktop
-### Run (debug)
-```
-cargo run -p framebolt-mobile
-```
-*Add `--release` to run the release version*
-### Build (debug)
-```
-cargo build -p framebolt-mobile
-```
-*Add `--release` to run the release version*
 
 ## Android
 ### Prerequisites

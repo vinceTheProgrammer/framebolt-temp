@@ -1,0 +1,79 @@
+on:
+  workflow_call:
+
+jobs:
+  build-rpm-opensuse-arm64:
+    name: Build & Package openSUSE RPM (arm64)
+    runs-on: ubuntu-22.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build RPM - openSUSE
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            opensuse/leap:15.6 \
+            bash -c '
+              set -euo pipefail
+
+              echo "==> Refreshing openSUSE repositories"
+
+              zypper --non-interactive refresh
+
+              echo "==> Installing openSUSE dependencies"
+
+              zypper --non-interactive install \
+                curl \
+                gcc \
+                gcc-c++ \
+                make \
+                pkg-config \
+                python3 \
+                rpm-build \
+                tar \
+                gzip \
+                gstreamer-devel \
+                gstreamer
+
+              echo "==> Installing Rust"
+
+              curl --proto "=https" \
+                --tlsv1.2 \
+                -sSf \
+                https://sh.rustup.rs \
+                | sh -s -- -y
+
+              source "$HOME/.cargo/env"
+
+              echo "==> Toolchain"
+
+              rustc --version
+              cargo --version
+
+              echo "==> Building Framebolt"
+
+              cargo build --bin framebolt \
+                --release
+
+              test -x target/release/framebolt
+
+              echo "==> Packaging openSUSE RPM"
+
+              ./scripts/linux/package_rpm_opensuse.sh
+
+              echo "==> RPM output"
+
+              ls -lah dist/
+
+              test -n "$(find dist -maxdepth 1 -name "*.rpm" -print -quit)"
+            '
+
+      - name: Upload openSUSE RPM artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-rpm-opensuse-arm64
+          path: dist/*.rpm
+          if-no-files-found: error

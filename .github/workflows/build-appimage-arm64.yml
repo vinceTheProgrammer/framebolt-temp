@@ -1,0 +1,104 @@
+on:
+  workflow_call:
+
+jobs:
+  build-appimage-arm64:
+    name: Build AppImage (ARM64)
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build AppImage in Rocky Linux 8
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            rockylinux:8 \
+            bash -c '
+              set -euo pipefail
+
+              echo "==> Architecture"
+              uname -m
+
+              test "$(uname -m)" = "aarch64"
+
+              echo "==> Installing dependencies"
+
+              dnf install -y \
+                epel-release
+
+              dnf install -y \
+                curl \
+                file \
+                gcc \
+                gcc-c++ \
+                make \
+                pkgconf-pkg-config \
+                python3 \
+                findutils \
+                libunwind-devel \
+                gstreamer1-devel \
+                glib2-devel
+
+              echo "==> Installing Rust"
+
+              curl --proto "=https" \
+                --tlsv1.2 \
+                -sSf \
+                https://sh.rustup.rs \
+                | sh -s -- -y
+
+              source "$HOME/.cargo/env"
+
+              echo "==> Toolchain"
+
+              rustc --version
+              cargo --version
+
+              echo "==> GStreamer"
+
+              pkg-config --modversion gstreamer-1.0
+              pkg-config --cflags --libs gstreamer-1.0
+
+              echo "==> Building Framebolt"
+
+              cargo build --bin framebolt \
+                --release
+
+              test -x target/release/framebolt
+
+              echo "==> Installing linuxdeploy"
+
+              curl -fL \
+                -o /usr/local/bin/linuxdeploy \
+                https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-aarch64.AppImage
+
+              chmod +x /usr/local/bin/linuxdeploy
+
+              export APPIMAGE_EXTRACT_AND_RUN=1
+
+              echo "==> Packaging AppImage"
+
+              ./scripts/linux/package_appimage.sh
+
+              echo "==> Verifying AppImage"
+
+              ls -lah dist/
+
+              APPIMAGE="$(find dist -maxdepth 1 -name "*.AppImage" -print -quit)"
+
+              test -n "$APPIMAGE"
+
+              file "$APPIMAGE"
+
+              echo "==> Done"
+            '
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: framebolt-appimage-arm64
+          path: dist/*.AppImage
+          if-no-files-found: error
