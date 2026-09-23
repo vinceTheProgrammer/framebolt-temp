@@ -1,6 +1,6 @@
 use eframe::egui;
 
-use crate::{panels::{PanelRegistry, canvas::CanvasPanel, timeline::TimelinePanel, tools::ToolsPanel}, renderer::SharedRenderer};
+use crate::renderer::SharedRenderer;
 
 pub struct SharedApp {
     pub renderer: Option<SharedRenderer>,
