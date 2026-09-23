@@ -281,7 +281,7 @@ impl CanvasRenderer {
         let viewport = glam::vec2(width, height);
 
 
-        let world_pivot = self.camera.screen_to_world(command.pivot, viewport);
+        let _world_pivot = self.camera.screen_to_world(command.pivot, viewport);
 
         self.camera.apply(command, viewport);
     }
