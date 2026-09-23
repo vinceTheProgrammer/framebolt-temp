@@ -36,7 +36,7 @@ modules:
       - install -Dm644 ${APP_ID}.desktop /app/share/applications/${APP_ID}.desktop
     sources:
       - type: file
-        path: ../target/release/framebolt-desktop
+        path: ../target/release/framebolt
         dest-filename: framebolt
       - type: file
         path: ../res/icons/framebolt.png

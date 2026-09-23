@@ -269,7 +269,7 @@ sha256sums=(
 prepare() {
     cd "\${srcdir}/framebolt-\${pkgver}"
 
-    # The workspace package is framebolt-desktop.
+    # The workspace package is framebolt.
     # No source modifications are currently required.
 }
 
@@ -285,7 +285,7 @@ package() {
     cd "\${srcdir}/framebolt-\${pkgver}"
 
     install -Dm755 \
-        target/release/framebolt-desktop \
+        target/release/framebolt \
         "\${pkgdir}/usr/bin/framebolt"
 
     install -Dm644 \
@@ -469,7 +469,7 @@ package() {
     cd "\${srcdir}/framebolt"
 
     install -Dm755 \
-        target/release/framebolt-desktop \
+        target/release/framebolt \
         "\${pkgdir}/usr/bin/framebolt"
 
     install -Dm644 \

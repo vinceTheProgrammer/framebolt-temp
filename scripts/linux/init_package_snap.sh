@@ -90,7 +90,7 @@ parts:
         --release
 
       install -Dm755 \
-        target/release/framebolt-desktop \
+        target/release/framebolt \
         "\$CRAFT_PART_INSTALL/bin/framebolt"
 EOF
 

@@ -23,7 +23,7 @@ mkdir -p \
     rpm/SOURCES/usr/share/applications \
     rpm/SOURCES/usr/share/icons/hicolor/96x96/apps
 
-cp target/release/framebolt-desktop \
+cp target/release/framebolt \
     rpm/SOURCES/usr/bin/framebolt
 
 cp res/icons/framebolt.png \

@@ -7,8 +7,8 @@ echo "=== Starting GStreamer bundling process ==="
 # Paths
 # ---------------------------------------------------------------------------
 
-APP_PATH="${APP_PATH:-target/release/framebolt-desktop.app}"
-APP_BIN="$APP_PATH/Contents/MacOS/framebolt-desktop"
+APP_PATH="${APP_PATH:-target/release/framebolt.app}"
+APP_BIN="$APP_PATH/Contents/MacOS/framebolt"
 
 if [[ ! -d "$APP_PATH" ]]; then
     echo "ERROR: App bundle not found: $APP_PATH"

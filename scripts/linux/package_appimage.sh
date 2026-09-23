@@ -23,7 +23,7 @@ rm -rf AppDir
 
 mkdir -p AppDir/usr/bin
 
-cp target/release/framebolt-desktop \
+cp target/release/framebolt \
     AppDir/usr/bin/framebolt
 
 chmod +x AppDir/usr/bin/framebolt
