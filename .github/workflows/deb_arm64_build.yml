@@ -1,0 +1,42 @@
+on:
+  workflow_call:
+
+jobs:
+  deb-arm64-build:
+      name: Build & Package Debian (arm64)
+      runs-on: ubuntu-22.04-arm
+
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - name: Install system dependencies
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y \
+              build-essential \
+              pkg-config \
+              libgstreamer1.0-dev \
+              libglib2.0-dev \
+              libunwind-dev \
+              python3 \
+              dpkg-dev
+
+        - name: Install Rust
+          uses: dtolnay/rust-toolchain@stable
+
+        - name: Build Framebolt
+          run: |
+            cargo build --bin framebolt \
+              --release
+
+        - name: Package Debian
+          run: |
+            ./scripts/linux/package_deb.sh
+
+        - name: Upload Debian artifact
+          uses: actions/upload-artifact@v7
+          with:
+            name: framebolt-deb-arm64
+            path: dist/*.deb
+            if-no-files-found: error
