@@ -10,92 +10,66 @@ on:
 jobs:
   build-deb-x64:
     uses: ./.github/workflows/build-deb-x64.yml
-
   build-deb-arm64:
     uses: ./.github/workflows/build-deb-arm64.yml
-
   build-rpm-fedora-x64:
     uses: ./.github/workflows/build-rpm-fedora-x64.yml
-
   build-rpm-fedora-arm64:
     uses: ./.github/workflows/build-rpm-fedora-arm64.yml
-
   build-rpm-opensuse-x64:
     uses: ./.github/workflows/build-rpm-opensuse-x64.yml
-
   build-rpm-opensuse-arm64:
     uses: ./.github/workflows/build-rpm-opensuse-arm64.yml
-
   build-appimage-x64:
     uses: ./.github/workflows/build-appimage-x64.yml
-
   build-appimage-arm64:
     uses: ./.github/workflows/build-appimage-arm64.yml
-
   build-flatpak-x64:
     uses: ./.github/workflows/build-flatpak-x64.yml
-
   build-flatpak-arm64:
     uses: ./.github/workflows/build-flatpak-arm64.yml
-
   build-snap-x64:
     uses: ./.github/workflows/build-snap-x64.yml
-
   build-snap-arm64:
     uses: ./.github/workflows/build-snap-arm64.yml
-  
   build-arch-bin-x64:
     uses: ./.github/workflows/build-arch-bin-x64.yml
-
   build-arch-bin-arm64:
     uses: ./.github/workflows/build-arch-bin-arm64.yml
-
   build-windows-x64:
     uses: ./.github/workflows/build-windows-x64.yml
-
   build-windows-arm64:
     uses: ./.github/workflows/build-windows-arm64.yml
-
   build-windows-portable-x64:
     needs:
           - build-windows-x64
     uses: ./.github/workflows/build-windows-portable-x64.yml
-
   build-windows-portable-arm64:
     needs:
           - build-windows-arm64
     uses: ./.github/workflows/build-windows-portable-arm64.yml
-
   build-windows-installer-x64:
     needs:
           - build-windows-x64
     uses: ./.github/workflows/build-windows-installer-x64.yml
-
   build-windows-installer-arm64:
     needs:
           - build-windows-arm64
     uses: ./.github/workflows/build-windows-installer-arm64.yml
-
   build-windows-msi-x64:
     needs:
         - build-windows-x64
     uses: ./.github/workflows/build-windows-msi-x64.yml
-
   build-windows-msi-arm64:
     needs:
         - build-windows-arm64
     uses: ./.github/workflows/build-windows-msi-arm64.yml
-
   build-macos-arm:
     uses: ./.github/workflows/build-macos-arm.yml
-
   build-macos-intel:
     uses: ./.github/workflows/build-macos-intel.yml
-
   build-android-debug:
     uses: ./.github/workflows/build-android-debug.yml
-
-
   build-android-debug-universal:
     uses: ./.github/workflows/build-android-debug-universal.yml
 
@@ -178,4 +152,6 @@ jobs:
   package-aur:
     needs:
       - release
+    permissions:
+      contents: write
     uses: ./.github/workflows/package-aur.yml
