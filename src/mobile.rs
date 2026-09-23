@@ -1,17 +1,8 @@
-use eframe::{
-    egui,
-    wgpu::Queue,
-};
+use eframe::{egui, wgpu::Queue};
 
 use framebolt_egui::{
     app::SharedApp,
-    panels::{
-        PanelContext,
-        PanelId,
-        PanelLocation,
-        PanelRegistry,
-        Platform,
-    },
+    panels::{PanelContext, PanelId, PanelLocation, PanelRegistry, Platform},
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -22,13 +13,12 @@ pub struct ShownPanels {
     pub right: bool,
 }
 
-
 pub fn show(
     ctx: &egui::Context,
     queue: &Queue,
     shared: &mut SharedApp,
     panels: &mut PanelRegistry,
-    shown_panels: ShownPanels
+    shown_panels: ShownPanels,
 ) {
     let default_width = 70.0;
     let default_height = 160.0;
@@ -38,9 +28,7 @@ pub fn show(
             .resizable(false)
             .default_width(default_width)
             .show(ctx, |ui| {
-                if let Some(panel) =
-                    panels.panel_mut(PanelId::Tools)
-                {
+                if let Some(panel) = panels.panel_mut(PanelId::Tools) {
                     let mut panel_ctx = PanelContext {
                         platform: Platform::Mobile,
                         shared,
@@ -60,9 +48,7 @@ pub fn show(
             .min_height(default_height * 0.75)
             .max_height(default_height * 1.5)
             .show(ctx, |ui| {
-                if let Some(panel) =
-                    panels.panel_mut(PanelId::Timeline)
-                {
+                if let Some(panel) = panels.panel_mut(PanelId::Timeline) {
                     let mut panel_ctx = PanelContext {
                         platform: Platform::Mobile,
                         shared,
@@ -76,9 +62,7 @@ pub fn show(
     }
 
     egui::CentralPanel::default().show(ctx, |ui| {
-        if let Some(panel) =
-            panels.panel_mut(PanelId::Canvas)
-        {
+        if let Some(panel) = panels.panel_mut(PanelId::Canvas) {
             let mut panel_ctx = PanelContext {
                 platform: Platform::Mobile,
                 shared,

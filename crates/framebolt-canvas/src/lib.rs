@@ -38,17 +38,16 @@ impl CanvasRenderer {
         }
     }
 
-    fn init_static_resources(
-        &mut self,
-        device: &wgpu::Device,
-    ) {
+    fn init_static_resources(&mut self, device: &wgpu::Device) {
         if self.static_resources.is_some() {
             return;
         }
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../../../assets/shaders/canvas.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(
+                include_str!("../../../assets/shaders/canvas.wgsl").into(),
+            ),
         });
 
         let camera_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -83,134 +82,124 @@ impl CanvasRenderer {
         });
 
         let canvas_vertices = [
-            Vertex { position: [-960.0, -540.0] }, // bottom-left
-            Vertex { position: [ 960.0, -540.0] }, // bottom-right
-            Vertex { position: [ 960.0,  540.0] }, // top-right
-
-            Vertex { position: [-960.0, -540.0] }, // bottom-left
-            Vertex { position: [ 960.0,  540.0] }, // top-right
-            Vertex { position: [-960.0,  540.0] }, // top-left
+            Vertex {
+                position: [-960.0, -540.0],
+            }, // bottom-left
+            Vertex {
+                position: [960.0, -540.0],
+            }, // bottom-right
+            Vertex {
+                position: [960.0, 540.0],
+            }, // top-right
+            Vertex {
+                position: [-960.0, -540.0],
+            }, // bottom-left
+            Vertex {
+                position: [960.0, 540.0],
+            }, // top-right
+            Vertex {
+                position: [-960.0, 540.0],
+            }, // top-left
         ];
 
-        let vertex_buffer = wgpu::util::DeviceExt::create_buffer_init(device, &wgpu::util::BufferInitDescriptor {
-            label: Some("canvas quad"),
-            contents: bytemuck::cast_slice(&canvas_vertices),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
+        let vertex_buffer = wgpu::util::DeviceExt::create_buffer_init(
+            device,
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("canvas quad"),
+                contents: bytemuck::cast_slice(&canvas_vertices),
+                usage: wgpu::BufferUsages::VERTEX,
+            },
+        );
 
         self.static_resources = Some(StaticResources {
             camera_buffer,
             camera_bind_group,
             vertex_buffer,
             shader,
-            camera_layout
+            camera_layout,
         });
 
-        self.rebuild_pipeline(
-            device,
-            wgpu::TextureFormat::Rgba8Unorm,
-        );
+        self.rebuild_pipeline(device, wgpu::TextureFormat::Rgba8Unorm);
     }
 
-    fn rebuild_pipeline(
-        &mut self,
-        device: &wgpu::Device,
-        format: wgpu::TextureFormat,
-    ) {
-
+    fn rebuild_pipeline(&mut self, device: &wgpu::Device, format: wgpu::TextureFormat) {
         let static_resources = self.static_resources.as_ref().unwrap();
         let shader = &static_resources.shader;
         let camera_layout = &static_resources.camera_layout;
 
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                    label: Some("Render Pipeline Layout"),
-                    bind_group_layouts: &[camera_layout],
-                    push_constant_ranges: &[],
-                }
-            );
+                label: Some("Render Pipeline Layout"),
+                bind_group_layouts: &[camera_layout],
+                push_constant_ranges: &[],
+            });
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                label: Some("Render Pipeline"),
-                layout: Some(&render_pipeline_layout),
-                vertex: wgpu::VertexState {
-                    module: shader,
-                    entry_point: Some("vs_main"), // 1.
-                    buffers: &[wgpu::VertexBufferLayout {
-                        array_stride: std::mem::size_of::<Vertex>() as u64,
-                        step_mode: wgpu::VertexStepMode::Vertex,
-                        attributes: &[
-                            wgpu::VertexAttribute {
-                                offset: 0,
-                                shader_location: 0,
-                                format: wgpu::VertexFormat::Float32x2,
-                            },
-                        ],
+            label: Some("Render Pipeline"),
+            layout: Some(&render_pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: shader,
+                entry_point: Some("vs_main"), // 1.
+                buffers: &[wgpu::VertexBufferLayout {
+                    array_stride: std::mem::size_of::<Vertex>() as u64,
+                    step_mode: wgpu::VertexStepMode::Vertex,
+                    attributes: &[wgpu::VertexAttribute {
+                        offset: 0,
+                        shader_location: 0,
+                        format: wgpu::VertexFormat::Float32x2,
                     }],
-                    compilation_options: wgpu::PipelineCompilationOptions::default(),
-                },
-                fragment: Some(wgpu::FragmentState { // 3.
-                    module: shader,
-                    entry_point: Some("fs_main"),
-                    targets: &[Some(wgpu::ColorTargetState { // 4.
-                        format,
-                        blend: Some(wgpu::BlendState::REPLACE),
-                        write_mask: wgpu::ColorWrites::ALL,
-                    })],
-                    compilation_options: wgpu::PipelineCompilationOptions::default(),
-                }),
-                primitive: wgpu::PrimitiveState {
-                    topology: wgpu::PrimitiveTopology::TriangleList, // 1.
-                    strip_index_format: None,
-                    front_face: wgpu::FrontFace::Ccw, // 2.
-                    cull_mode: Some(wgpu::Face::Back),
-                    // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
-                    polygon_mode: wgpu::PolygonMode::Fill,
-                    // Requires Features::DEPTH_CLIP_CONTROL
-                    unclipped_depth: false,
-                    // Requires Features::CONSERVATIVE_RASTERIZATION
-                    conservative: false,
-                },
-                depth_stencil: None, // 1.
-                multisample: wgpu::MultisampleState {
-                    count: 1, // 2.
-                    mask: !0, // 3.
-                    alpha_to_coverage_enabled: false, // 4.
-                },
-                cache: None,
-                multiview: None,
-            }
-        );
+                }],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
+            },
+            fragment: Some(wgpu::FragmentState {
+                // 3.
+                module: shader,
+                entry_point: Some("fs_main"),
+                targets: &[Some(wgpu::ColorTargetState {
+                    // 4.
+                    format,
+                    blend: Some(wgpu::BlendState::REPLACE),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
+            }),
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList, // 1.
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw, // 2.
+                cull_mode: Some(wgpu::Face::Back),
+                // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
+                polygon_mode: wgpu::PolygonMode::Fill,
+                // Requires Features::DEPTH_CLIP_CONTROL
+                unclipped_depth: false,
+                // Requires Features::CONSERVATIVE_RASTERIZATION
+                conservative: false,
+            },
+            depth_stencil: None, // 1.
+            multisample: wgpu::MultisampleState {
+                count: 1,                         // 2.
+                mask: !0,                         // 3.
+                alpha_to_coverage_enabled: false, // 4.
+            },
+            cache: None,
+            multiview: None,
+        });
 
         self.pipeline = Some(render_pipeline);
         self.current_format = Some(format);
     }
 
-    pub fn ensure_initialized(
-        &mut self,
-        device: &wgpu::Device,
-        format: wgpu::TextureFormat,
-    ) {
+    pub fn ensure_initialized(&mut self, device: &wgpu::Device, format: wgpu::TextureFormat) {
         self.init_static_resources(device);
 
-        if self.current_format == Some(format)
-            && self.pipeline.is_some()
-        {
+        if self.current_format == Some(format) && self.pipeline.is_some() {
             return;
         }
 
-        self.rebuild_pipeline(
-            device,
-            format,
-        );
+        self.rebuild_pipeline(device, format);
     }
 
-    pub fn resize(
-        &mut self,
-        device: &wgpu::Device,
-        width: u32,
-        height: u32,
-    ) {
+    pub fn resize(&mut self, device: &wgpu::Device, width: u32, height: u32) {
         if self.size == (width, height) {
             return;
         }
@@ -230,8 +219,7 @@ impl CanvasRenderer {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: *current_format,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT
-                | wgpu::TextureUsages::TEXTURE_BINDING,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         });
 
@@ -241,17 +229,12 @@ impl CanvasRenderer {
         self.view = Some(view);
     }
 
-    pub fn render(
-        &mut self,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-    ) {
+    pub fn render(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) {
         let view = self.view.as_ref().unwrap();
 
-        let mut encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("encoder"),
-            });
+        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("encoder"),
+        });
 
         {
             let render_pass_descriptor = &wgpu::RenderPassDescriptor {
@@ -286,30 +269,30 @@ impl CanvasRenderer {
     pub fn apply_camera_command(&mut self, command: CameraCommand, width: f32, height: f32) {
         let viewport = glam::vec2(width, height);
 
-
         let _world_pivot = self.camera.screen_to_world(command.pivot, viewport);
 
         self.camera.apply(command, viewport);
     }
-    
+
     pub fn update_camera(&mut self, queue: &wgpu::Queue, width: f32, height: f32) {
         let view = Mat4::from_quat(Quat::from_rotation_z(-self.camera.rotation))
-                 * Mat4::from_translation(-self.camera.position.extend(0.0));
-    
+            * Mat4::from_translation(-self.camera.position.extend(0.0));
+
         let proj = Mat4::orthographic_rh(
             -width / (2.0 * self.camera.zoom),
-             width / (2.0 * self.camera.zoom),
+            width / (2.0 * self.camera.zoom),
             -height / (2.0 * self.camera.zoom),
-             height / (2.0 * self.camera.zoom),
-            -1.0, 1.0,
+            height / (2.0 * self.camera.zoom),
+            -1.0,
+            1.0,
         );
-    
+
         let view_proj = proj * view;
-    
+
         let uniform = CameraUniform {
             view_proj: view_proj.to_cols_array_2d(),
         };
-    
+
         queue.write_buffer(
             &self.static_resources.as_ref().unwrap().camera_buffer,
             0,
@@ -320,7 +303,7 @@ impl CanvasRenderer {
     pub fn render_to_render_pass(&self, render_pass: &mut wgpu::RenderPass<'_>) {
         let resources = self.static_resources.as_ref().unwrap();
         let pipeline = self.pipeline.as_ref().unwrap();
-    
+
         // Main content
         render_pass.set_pipeline(pipeline);
         render_pass.set_bind_group(0, &resources.camera_bind_group, &[]);
@@ -347,10 +330,10 @@ pub struct CameraUniform {
 
 #[derive(Debug, Clone, Copy)]
 pub struct CameraCommand {
-    pub pan: glam::Vec2,           // screen-space pixels
-    pub zoom_factor: f32,    // multiplicative (1.0 = no change)
-    pub rotate_delta: f32,   // radians
-    pub pivot: glam::Vec2,         // screen-space point (for zoom + rotate)
+    pub pan: glam::Vec2,   // screen-space pixels
+    pub zoom_factor: f32,  // multiplicative (1.0 = no change)
+    pub rotate_delta: f32, // radians
+    pub pivot: glam::Vec2, // screen-space point (for zoom + rotate)
 }
 
 impl Default for CameraCommand {
@@ -366,9 +349,9 @@ impl Default for CameraCommand {
 
 #[derive(Debug)]
 pub struct Camera2D {
-    pub position: glam::Vec2,      // world space
-    pub zoom: f32,           // pixels per world unit
-    pub rotation: f32,       // radians
+    pub position: glam::Vec2, // world space
+    pub zoom: f32,            // pixels per world unit
+    pub rotation: f32,        // radians
     pub min_zoom: f32,
     pub max_zoom: f32,
 }
@@ -394,7 +377,7 @@ impl Camera2D {
             let world_after = self.screen_to_world(cmd.pivot, viewport);
             self.position += world_before - world_after;
         }
-    
+
         // Rotation around pivot
         if cmd.rotate_delta.abs() > 0.0001 {
             let world_before = self.screen_to_world(cmd.pivot, viewport);
@@ -402,22 +385,17 @@ impl Camera2D {
             let world_after = self.screen_to_world(cmd.pivot, viewport);
             self.position += world_before - world_after;
         }
-    
+
         // Pan
         if cmd.pan != glam::Vec2::ZERO {
-            let world_delta =
-                glam::Mat2::from_angle(self.rotation)
-                    * (cmd.pan / self.zoom);
+            let world_delta = glam::Mat2::from_angle(self.rotation) * (cmd.pan / self.zoom);
 
             self.position -= world_delta;
         }
     }
 
     pub fn screen_to_world(&self, screen: Vec2, viewport: Vec2) -> Vec2 {
-        let centered = Vec2::new(
-            screen.x - viewport.x * 0.5,
-            viewport.y * 0.5 - screen.y,
-        );
+        let centered = Vec2::new(screen.x - viewport.x * 0.5, viewport.y * 0.5 - screen.y);
 
         // Rotate inverse, then scale + translate
         let rotated = Mat2::from_angle(self.rotation) * centered;
@@ -428,10 +406,7 @@ impl Camera2D {
         let relative = (world - self.position) * self.zoom;
         let rotated = Mat2::from_angle(self.rotation) * relative;
 
-        Vec2::new(
-            viewport.x * 0.5 + rotated.x,
-            viewport.y * 0.5 - rotated.y,
-        )
+        Vec2::new(viewport.x * 0.5 + rotated.x, viewport.y * 0.5 - rotated.y)
     }
 
     pub fn reset(&mut self) {

@@ -1,6 +1,10 @@
 use eframe::{egui, egui_wgpu};
 
-use crate::{callback::MyCallback, input::handle_canvas_input, panels::{Panel, PanelContext, PanelId}};
+use crate::{
+    callback::MyCallback,
+    input::handle_canvas_input,
+    panels::{Panel, PanelContext, PanelId},
+};
 
 pub struct CanvasPanel {
     interaction_state: CanvasInteractionState,
@@ -14,7 +18,10 @@ pub struct CanvasInteractionState {
 impl Default for CanvasPanel {
     fn default() -> Self {
         Self {
-            interaction_state: CanvasInteractionState { rotation_pivot: None, last_touch_center: None }
+            interaction_state: CanvasInteractionState {
+                rotation_pivot: None,
+                last_touch_center: None,
+            },
         }
     }
 }
@@ -28,30 +35,18 @@ impl Panel for CanvasPanel {
         "Canvas"
     }
 
-    fn ui(
-        &mut self,
-        ui: &mut egui::Ui,
-        ctx: &mut PanelContext,
-    ) {
-        let Some(renderer) =
-            ctx.shared.renderer.as_ref()
-        else {
+    fn ui(&mut self, ui: &mut egui::Ui, ctx: &mut PanelContext) {
+        let Some(renderer) = ctx.shared.renderer.as_ref() else {
             return;
         };
 
-        let Some(queue) =
-            ctx.queue
-        else {
+        let Some(queue) = ctx.queue else {
             return;
         };
 
         let size = ui.available_size();
 
-        let (rect, response) =
-            ui.allocate_exact_size(
-                size,
-                egui::Sense::drag(),
-            );
+        let (rect, response) = ui.allocate_exact_size(size, egui::Sense::drag());
 
         handle_canvas_input(
             ui,
@@ -59,29 +54,23 @@ impl Panel for CanvasPanel {
             &mut self.interaction_state,
             ctx.platform,
             rect,
-            &response
+            &response,
         );
 
         let ppp = ui.ctx().pixels_per_point();
 
         {
-            let mut renderer_guard =
-                renderer.lock();
+            let mut renderer_guard = renderer.lock();
 
-            renderer_guard.update_camera(
-                queue,
-                rect.width() * ppp,
-                rect.height() * ppp,
-            );
+            renderer_guard.update_camera(queue, rect.width() * ppp, rect.height() * ppp);
         }
 
-        let callback =
-            egui_wgpu::Callback::new_paint_callback(
-                rect,
-                MyCallback {
-                    renderer: renderer.clone(),
-                },
-            );
+        let callback = egui_wgpu::Callback::new_paint_callback(
+            rect,
+            MyCallback {
+                renderer: renderer.clone(),
+            },
+        );
 
         ui.painter().add(callback);
     }

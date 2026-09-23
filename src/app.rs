@@ -3,19 +3,14 @@ use eframe::egui;
 use egui_dock::DockState;
 use framebolt_egui::{
     app::SharedApp,
-    panels::{
-        PanelRegistry,
-        canvas::CanvasPanel,
-        timeline::TimelinePanel,
-        tools::ToolsPanel,
-    },
+    panels::{PanelRegistry, canvas::CanvasPanel, timeline::TimelinePanel, tools::ToolsPanel},
     renderer::prepare_renderer_then,
 };
 
 use crate::{
-    desktop::{self, DockTab, create_dock_state}, mobile::{self, ShownPanels},
+    desktop::{self, DockTab, create_dock_state},
+    mobile::{self, ShownPanels},
 };
-
 
 pub enum UiMode {
     Desktop,
@@ -58,7 +53,7 @@ impl FrameboltApp {
                 bottom: true,
                 left: true,
                 right: false,
-            }
+            },
         }
     }
 
@@ -68,27 +63,18 @@ impl FrameboltApp {
 }
 
 impl eframe::App for FrameboltApp {
-    fn update(
-        &mut self,
-        ctx: &egui::Context,
-        frame: &mut eframe::Frame,
-    ) {
-        prepare_renderer_then(
-            ctx,
-            frame,
-            &mut self.shared,
-            |queue, shared| {
-                match self.ui_mode {
-                    UiMode::Desktop => {
-                        desktop::show(ctx, queue, shared, &mut self.panels, &mut self.dock_state);
-                    }
-
-                    UiMode::Mobile => {
-                        mobile::show(ctx, queue, shared, &mut self.panels, self.shown_panels);
-                    }
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        prepare_renderer_then(ctx, frame, &mut self.shared, |queue, shared| {
+            match self.ui_mode {
+                UiMode::Desktop => {
+                    desktop::show(ctx, queue, shared, &mut self.panels, &mut self.dock_state);
                 }
-            },
-        );
+
+                UiMode::Mobile => {
+                    mobile::show(ctx, queue, shared, &mut self.panels, self.shown_panels);
+                }
+            }
+        });
     }
 }
 

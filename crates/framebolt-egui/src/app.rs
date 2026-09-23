@@ -22,9 +22,8 @@ where
             egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
 
             cc.egui_ctx.set_fonts(fonts);
-            
+
             Ok(Box::new(create(cc)))
-            }
-        ),
+        }),
     )
 }

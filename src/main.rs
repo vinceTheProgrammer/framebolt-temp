@@ -6,8 +6,5 @@ fn main() -> Result<(), eframe::Error> {
         ..Default::default()
     };
 
-    framebolt_egui::app::run_app(
-        options,
-        |_cc| FrameboltApp::new(),
-    )
+    framebolt_egui::app::run_app(options, |_cc| FrameboltApp::new())
 }

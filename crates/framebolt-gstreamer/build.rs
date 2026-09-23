@@ -22,9 +22,7 @@ fn main() {
             .unwrap()
             .to_path_buf();
 
-        let lib_dir = workspace_root
-            .join("res/android/libs")
-            .join(abi);
+        let lib_dir = workspace_root.join("res/android/libs").join(abi);
 
         println!("cargo:rustc-link-search=native={}", lib_dir.display());
 

@@ -1,10 +1,13 @@
-use eframe::egui::{self, ahash::{HashMap, HashMapExt}};
+use eframe::egui::{
+    self,
+    ahash::{HashMap, HashMapExt},
+};
 
 use crate::app::SharedApp;
 
+pub mod canvas;
 pub mod timeline;
 pub mod tools;
-pub mod canvas;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PanelId {
@@ -41,11 +44,7 @@ pub trait Panel {
 
     fn title(&self) -> &'static str;
 
-    fn ui(
-        &mut self,
-        ui: &mut egui::Ui,
-        ctx: &mut PanelContext,
-    );
+    fn ui(&mut self, ui: &mut egui::Ui, ctx: &mut PanelContext);
 }
 
 pub struct PanelRegistry {
@@ -65,18 +64,12 @@ impl PanelRegistry {
         }
     }
 
-    pub fn register(
-        &mut self,
-        panel: Box<dyn Panel>,
-    ) {
+    pub fn register(&mut self, panel: Box<dyn Panel>) {
         let id = panel.id();
         self.panels.insert(id, panel);
     }
 
-    pub fn panel_mut(
-        &mut self,
-        id: PanelId,
-    ) -> Option<&mut Box<dyn Panel>> {
+    pub fn panel_mut(&mut self, id: PanelId) -> Option<&mut Box<dyn Panel>> {
         self.panels.get_mut(&id)
     }
 }

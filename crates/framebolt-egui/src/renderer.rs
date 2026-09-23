@@ -12,19 +12,16 @@ pub fn prepare_renderer_then<F>(
     frame: &eframe::Frame,
     shared: &mut SharedApp,
     f: F,
-)
-where
+) where
     F: FnOnce(&wgpu::Queue, &mut SharedApp),
 {
     if let Some(render_state) = frame.wgpu_render_state() {
         let device = &render_state.device;
         let queue = &render_state.queue;
 
-        let renderer = shared.renderer.get_or_insert_with(|| {
-            Arc::new(Mutex::new(
-                CanvasRenderer::new()
-            ))
-        });
+        let renderer = shared
+            .renderer
+            .get_or_insert_with(|| Arc::new(Mutex::new(CanvasRenderer::new())));
 
         {
             let mut renderer_guard = renderer.lock();

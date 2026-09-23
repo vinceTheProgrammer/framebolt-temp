@@ -1,5 +1,5 @@
+use eframe::egui::PaintCallbackInfo;
 use eframe::egui_wgpu::CallbackTrait;
-use eframe::egui::{PaintCallbackInfo};
 
 use crate::renderer::SharedRenderer;
 
@@ -11,7 +11,7 @@ impl CallbackTrait for MyCallback {
     fn paint(
         &self,
         info: PaintCallbackInfo,
-        render_pass: &mut wgpu::RenderPass<'static>, 
+        render_pass: &mut wgpu::RenderPass<'static>,
         _callback_resources: &type_map::concurrent::TypeMap,
     ) {
         let renderer = self.renderer.lock();

@@ -6,18 +6,12 @@ pub fn dependency_report() -> String {
     report.push_str("Framebolt dependency report\n\n");
 
     // Rust version
-    report.push_str(&format!(
-        "Rustc: {}\n",
-        rustc_version_runtime::version()
-    ));
+    report.push_str(&format!("Rustc: {}\n", rustc_version_runtime::version()));
 
     report.push_str(&gstreamer_report());
 
     // wasmtime
-    report.push_str(&format!(
-        "wasmtime: {:?}\n",
-        wasmtime::WasmFeatures::all()
-    ));
+    report.push_str(&format!("wasmtime: {:?}\n", wasmtime::WasmFeatures::all()));
 
     report
 }
