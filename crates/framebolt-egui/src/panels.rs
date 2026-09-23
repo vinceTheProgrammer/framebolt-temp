@@ -52,6 +52,12 @@ pub struct PanelRegistry {
     panels: HashMap<PanelId, Box<dyn Panel>>,
 }
 
+impl Default for PanelRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PanelRegistry {
     pub fn new() -> Self {
         Self {

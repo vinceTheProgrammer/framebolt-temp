@@ -2,16 +2,9 @@ use eframe::egui;
 
 use crate::renderer::SharedRenderer;
 
+#[derive(Default)]
 pub struct SharedApp {
     pub renderer: Option<SharedRenderer>,
-}
-
-impl Default for SharedApp {
-    fn default() -> Self {
-        Self {
-            renderer: None,
-        }
-    }
 }
 
 pub fn run_app<A>(

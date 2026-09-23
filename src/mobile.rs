@@ -14,21 +14,26 @@ use framebolt_egui::{
     },
 };
 
+#[derive(Debug, Clone, Copy)]
+pub struct ShownPanels {
+    pub top: bool,
+    pub bottom: bool,
+    pub left: bool,
+    pub right: bool,
+}
+
 
 pub fn show(
     ctx: &egui::Context,
     queue: &Queue,
     shared: &mut SharedApp,
     panels: &mut PanelRegistry,
-    show_left: bool,
-    _show_right: bool,
-    show_bottom: bool,
-    _show_top: bool,
+    shown_panels: ShownPanels
 ) {
     let default_width = 70.0;
     let default_height = 160.0;
 
-    if show_left {
+    if shown_panels.left {
         egui::SidePanel::left("tools_panel")
             .resizable(false)
             .default_width(default_width)
@@ -48,7 +53,7 @@ pub fn show(
             });
     }
 
-    if show_bottom {
+    if shown_panels.bottom {
         egui::TopBottomPanel::bottom("timeline_panel")
             .resizable(false)
             .default_height(default_height)

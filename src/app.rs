@@ -13,7 +13,7 @@ use framebolt_egui::{
 };
 
 use crate::{
-    desktop::{self, DockTab, create_dock_state}, mobile,
+    desktop::{self, DockTab, create_dock_state}, mobile::{self, ShownPanels},
 };
 
 
@@ -30,10 +30,13 @@ pub struct FrameboltApp {
     // Desktop-specific state
     dock_state: DockState<DockTab>,
 
-    pub show_left: bool,
-    pub show_right: bool,
-    pub show_bottom: bool,
-    pub show_top: bool,
+    pub shown_panels: ShownPanels,
+}
+
+impl Default for FrameboltApp {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl FrameboltApp {
@@ -50,10 +53,12 @@ impl FrameboltApp {
             ui_mode,
             dock_state: create_dock_state(),
 
-            show_left: true,
-            show_right: false,
-            show_bottom: true,
-            show_top: false,
+            shown_panels: ShownPanels {
+                top: false,
+                bottom: true,
+                left: true,
+                right: false,
+            }
         }
     }
 
@@ -79,7 +84,7 @@ impl eframe::App for FrameboltApp {
                     }
 
                     UiMode::Mobile => {
-                        mobile::show(ctx, queue, shared, &mut self.panels, self.show_left, self.show_right, self.show_bottom, self.show_top);
+                        mobile::show(ctx, queue, shared, &mut self.panels, self.shown_panels);
                     }
                 }
             },

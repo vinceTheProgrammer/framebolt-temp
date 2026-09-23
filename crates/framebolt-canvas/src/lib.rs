@@ -19,6 +19,12 @@ pub struct CanvasRenderer {
     static_resources: Option<StaticResources>,
 }
 
+impl Default for CanvasRenderer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CanvasRenderer {
     pub fn new() -> Self {
         Self {
@@ -119,7 +125,7 @@ impl CanvasRenderer {
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("Render Pipeline Layout"),
-                    bind_group_layouts: &[&camera_layout],
+                    bind_group_layouts: &[camera_layout],
                     push_constant_ranges: &[],
                 }
             );
@@ -128,7 +134,7 @@ impl CanvasRenderer {
                 label: Some("Render Pipeline"),
                 layout: Some(&render_pipeline_layout),
                 vertex: wgpu::VertexState {
-                    module: &shader,
+                    module: shader,
                     entry_point: Some("vs_main"), // 1.
                     buffers: &[wgpu::VertexBufferLayout {
                         array_stride: std::mem::size_of::<Vertex>() as u64,
@@ -144,10 +150,10 @@ impl CanvasRenderer {
                     compilation_options: wgpu::PipelineCompilationOptions::default(),
                 },
                 fragment: Some(wgpu::FragmentState { // 3.
-                    module: &shader,
+                    module: shader,
                     entry_point: Some("fs_main"),
                     targets: &[Some(wgpu::ColorTargetState { // 4.
-                        format: format,
+                        format,
                         blend: Some(wgpu::BlendState::REPLACE),
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
@@ -251,7 +257,7 @@ impl CanvasRenderer {
             let render_pass_descriptor = &wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
+                    view,
                     resolve_target: None,
                     depth_slice: None,
                     ops: wgpu::Operations {
