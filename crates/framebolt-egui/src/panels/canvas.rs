@@ -1,5 +1,3 @@
-use eframe::{egui, egui_wgpu};
-
 use crate::{
     callback::MyCallback,
     input::handle_canvas_input,

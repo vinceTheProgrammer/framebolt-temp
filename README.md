@@ -1,3 +1,6 @@
+notes for future me:
+debian 12 VM framebolt 0.1.17 libxkbcommon-x11.so could not be loaded. Also had to install fuse.
+
 2D Animation Plugin Platform*
 
 *The "plugin platform" part is still wip lol

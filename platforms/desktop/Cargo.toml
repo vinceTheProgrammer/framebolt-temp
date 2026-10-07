@@ -1,0 +1,17 @@
+[package]
+name = "framebolt-desktop"
+edition.workspace = true
+version.workspace = true
+
+[[bin]]
+name = "framebolt"
+path = "src/main.rs"
+
+[dependencies]
+framebolt = { path = "../.." }
+eframe = { workspace = true, features = ["wgpu", "x11", "wayland", "accesskit"] }
+# egui = "0.33.3"
+# egui_dock = "0.18.0"
+# glam = "0.32.1"
+# wgpu = "27.0.1"
+# winit.workspace = true

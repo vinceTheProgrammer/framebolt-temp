@@ -1,0 +1,12 @@
+[package]
+name = "framebolt-ios"
+edition.workspace = true
+version.workspace = true
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["staticlib"]
+
+[dependencies]
+framebolt = { path = "../.." }
+# winit.workspace = true

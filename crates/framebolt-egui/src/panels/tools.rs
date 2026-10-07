@@ -1,5 +1,3 @@
-use eframe::egui;
-
 use crate::panels::Panel;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

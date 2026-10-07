@@ -39,3 +39,19 @@ mkdir -p "$HEADERS_DST/lib/glib-2.0/include"
 
 cp -r -v $HEADERS_SRC/include/* $HEADERS_DST/include/
 cp -r -v $HEADERS_SRC/lib/glib-2.0/include/* $HEADERS_DST/lib/glib-2.0/include/
+
+# ---- Android Java sources ----
+JAVA_DST="../res/android/src/org/freedesktop/gstreamer"
+JAVA_SRC="./arm64/share/gst-android/ndk-build"
+
+echo "Copying Android Java sources..."
+mkdir -p "$JAVA_DST"
+mkdir -p "$JAVA_DST/androidmedia"
+
+# Core GStreamer Android integration
+cp -v "$JAVA_SRC/GStreamer.java" "$JAVA_DST/"
+
+# AndroidMedia JNI callback classes
+cp -v "$JAVA_SRC/androidmedia/"*.java "$JAVA_DST/androidmedia/"
+
+echo "✅ Android Java sources staged"

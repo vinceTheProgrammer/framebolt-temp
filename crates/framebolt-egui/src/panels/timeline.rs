@@ -1,9 +1,10 @@
-use eframe::egui::{self, Align, Layout, RichText, Vec2};
+use egui::{self, Align, Layout, RichText, Vec2};
 
 use egui_phosphor::regular::{
     ARROW_DOWN, ARROW_LEFT, ARROW_RIGHT, ARROW_UP, BACKSPACE, EYE, EYE_SLASH, PAUSE, PLAY,
     PLUS_SQUARE, STACK_PLUS, TRASH,
 };
+use framebolt_core::dependency_report;
 
 use crate::panels::{Panel, PanelContext, PanelId};
 
@@ -124,7 +125,7 @@ impl TimelinePanel {
 
             ui.separator();
 
-            ui.label(RichText::new(format!("Frame {}", self.current_frame + 1)).strong());
+            ui.label(dependency_report());
 
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.label(format!("{} Layers", self.layers.len()));

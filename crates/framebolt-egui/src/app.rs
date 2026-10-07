@@ -1,5 +1,3 @@
-use eframe::egui;
-
 use crate::renderer::SharedRenderer;
 
 #[derive(Default)]
@@ -7,23 +5,19 @@ pub struct SharedApp {
     pub renderer: Option<SharedRenderer>,
 }
 
-pub fn run_app<A>(
-    options: eframe::NativeOptions,
-    create: impl FnOnce(&eframe::CreationContext<'_>) -> A + 'static,
-) -> Result<(), eframe::Error>
-where
-    A: eframe::App + 'static,
-{
-    eframe::run_native(
-        "framebolt",
-        options,
-        Box::new(move |cc| {
-            let mut fonts = egui::FontDefinitions::default();
-            egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
+impl SharedApp {
+    pub fn new() -> Self {
+        Self::default()
+    }
 
-            cc.egui_ctx.set_fonts(fonts);
+    pub fn configure_egui(ctx: &egui::Context) {
+        let mut fonts = egui::FontDefinitions::default();
 
-            Ok(Box::new(create(cc)))
-        }),
-    )
+        egui_phosphor::add_to_fonts(
+            &mut fonts,
+            egui_phosphor::Variant::Regular,
+        );
+
+        ctx.set_fonts(fonts);
+    }
 }

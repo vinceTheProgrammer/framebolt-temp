@@ -1,5 +1,5 @@
-use eframe::egui::PaintCallbackInfo;
-use eframe::egui_wgpu::CallbackTrait;
+use egui::PaintCallbackInfo;
+use egui_wgpu::CallbackTrait;
 
 use crate::renderer::SharedRenderer;
 

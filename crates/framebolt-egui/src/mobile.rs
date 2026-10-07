@@ -1,9 +1,6 @@
-use eframe::{egui, wgpu::Queue};
+use wgpu::Queue;
 
-use framebolt_egui::{
-    app::SharedApp,
-    panels::{PanelContext, PanelId, PanelLocation, PanelRegistry, Platform},
-};
+use crate::{app::SharedApp, panels::{PanelContext, PanelId, PanelLocation, PanelRegistry, Platform}};
 
 #[derive(Debug, Clone, Copy)]
 pub struct ShownPanels {

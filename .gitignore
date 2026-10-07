@@ -18,3 +18,4 @@ AppDir/
 dist/
 ./rpm
 ./flatpak
+.build

@@ -1,13 +1,8 @@
-use eframe::{egui, wgpu::Queue};
-
 use egui_dock::{DockArea, DockState};
-
 use framebolt_core::dependency_report;
+use wgpu::Queue;
 
-use framebolt_egui::{
-    app::SharedApp,
-    panels::{PanelContext, PanelId, PanelLocation, PanelRegistry, Platform},
-};
+use crate::{app::SharedApp, panels::{PanelContext, PanelId, PanelLocation, PanelRegistry, Platform}};
 
 #[derive(Clone)]
 pub struct DockTab {

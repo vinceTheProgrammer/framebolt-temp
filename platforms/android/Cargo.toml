@@ -1,0 +1,67 @@
+[package]
+name = "framebolt-android"
+edition.workspace = true
+version.workspace = true
+
+[package.metadata.android]
+use_aapt2 = true
+
+package = "com.framebolt.app"
+apk_name = "framebolt"
+
+# Specifies the array of targets to build for.
+build_targets = [ 
+    # "armv7-linux-androideabi", 
+    "aarch64-linux-android", 
+    # "i686-linux-android", 
+    # "x86_64-linux-android" 
+]
+
+strip = "strip"
+
+resources = "../../res/android/res"
+
+assets = "../../assets"
+
+runtime_libs = "../../res/android/libs"
+
+java_sources = "../../res/android/src"
+
+[package.metadata.android.signing.release]
+path = "../../res/android/framebolt-release.keystore"
+keystore_password = "$FRAMEBOLT_KEYSTORE_PASSWORD"
+alias = "framebolt"
+key_password = "$FRAMEBOLT_KEY_PASSWORD"
+
+[package.metadata.android.sdk]
+min_sdk_version = 23
+target_sdk_version = 34
+
+[package.metadata.android.application]
+has_code = true
+theme = "@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen"
+label = "Framebolt"
+icon = "@mipmap/ic_launcher"
+
+[[package.metadata.android.application.activity]]
+name = ".MainActivity"
+orientation = "landscape"
+
+[[package.metadata.android.application.activity.meta_data]]
+name = "android.app.lib_name"
+
+[[package.metadata.android.application.activity.intent_filter]]
+actions = ["android.intent.action.VIEW", "android.intent.action.MAIN"]
+categories = ["android.intent.category.LAUNCHER"]
+
+[lib]
+path = "src/lib.rs"
+name = "framebolt"
+crate-type = ["cdylib"]
+
+[dependencies]
+framebolt = { path = "../.." }
+eframe = { workspace = true, default-features = false, features = ["wgpu", "android-native-activity", "default_fonts",]}
+# jni = "0.21"
+# cargo-apk2 = "1.3.6"
+winit.workspace = true

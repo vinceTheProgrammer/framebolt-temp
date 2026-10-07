@@ -1,4 +1,4 @@
-use eframe::egui::{
+use egui::{
     self,
     ahash::{HashMap, HashMapExt},
 };
